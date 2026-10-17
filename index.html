@@ -502,6 +502,25 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
 .panel.rb .lf-help{margin-top:10px}
 @media (max-width:560px){.rb-f{gap:10px}.rb-in,.rb-f input[type=date]{width:100%}.rb-f .rb-v,.rb-f label:nth-child(2){flex:1 1 140px}.rb-btns .btn{flex:1 1 auto;justify-content:center}}
 
+/* ---------- compras novas (notificações do celular) ---------- */
+.nav .badge.cxb{background:var(--accent-ink);color:var(--accent)}
+.panel.cx{margin-top:14px;border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.panel.cx>header{margin-bottom:10px}
+.panel.cx h2{display:flex;align-items:center;gap:8px}
+.cx-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cx-it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line-2)}
+.cx-it:last-child{border-bottom:0}
+.cx-it.busy{opacity:.55}
+.cx-m{min-width:0;font-size:13.5px;line-height:1.4}
+.cx-v{font:600 15px var(--f-body)}
+.cx-n{font-weight:500}
+.cx-m small{display:block;color:var(--ink-3);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.cx-m .cx-sug{color:var(--ink-2)}
+.cx-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.panel.cx .lf-msg{margin-top:4px}
+.cxbar{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin:0 0 14px;padding:10px 14px;border-radius:10px;border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);background:var(--accent-soft);font-size:13.5px}
+.cxbar .tx{flex:1 1 220px}
+@media (max-width:560px){.cx-it{grid-template-columns:minmax(0,1fr)}.cx-a{justify-content:flex-start}.cx-a .btn{flex:1 1 auto;justify-content:center;height:34px}}
 </style>
 <div class="app" id="app">
   <aside class="rail" id="rail">
@@ -510,7 +529,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
       <div><b>Controle Financeiro</b><small>2026 · casal e família</small></div>
     </div>
     <nav class="nav" id="nav" aria-label="Seções do painel">
-      <button type="button" class="nav-add" data-tab="lancar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Lançar</span></button>
+      <button type="button" class="nav-add" data-tab="lancar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Lançar</span><em class="badge cxb" id="cxBadge" hidden></em></button>
       <button type="button" data-tab="contas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5"/><path d="M9 16.5l2 2 4-4"/></svg><span>Contas a pagar</span></button>
       <button type="button" data-tab="geral"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Visão geral</span></button>
       <button type="button" data-tab="ano"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Ano</span></button>
@@ -568,7 +587,8 @@ PF.RANGES = {
   cad: "'CADASTROS'!A1:Q60",
   pag: "'PAGAMENTOS'!A1:G",
   aud: "'AUDITORIA'!A1:G60",
-  cap: "'CONTAS A PAGAR'!B4:O110"
+  cap: "'CONTAS A PAGAR'!B4:O110",
+  cx: "'CAIXA DE ENTRADA'!A1:G"
 };
 PF.CAP_SHEET = "'CONTAS A PAGAR'";
 PF.CAP_ROW0 = 4;   // primeira linha do intervalo cap
@@ -767,6 +787,119 @@ PF.tickCell = (M, card, m) => {
   return PF.CAP_SHEET + '!' + String.fromCharCode(67 + j) + row;
 };
 
+/* ---------- leitor das notificações do banco (aba CAIXA DE ENTRADA) ----------
+   Entra: { app, titulo, texto } como chegou do celular.
+   Sai:   { val, estab, final, tipo, parc, parcVal, foreign, cardDesc, wallet }
+   tipo: compra | debito | pix | boleto | entrada | estorno | negada | fatura | outro
+   Carteira do Google: título = loja; texto = "R$ 1,00 com Banco Inter Gold Mastercard ••6615". */
+PF.parseNotif = function (n) {
+  const app = String(n.app || ''), tit = String(n.titulo || ''), txt = String(n.texto || '');
+  const all = (tit + '\n' + txt).replace(/\u00a0/g, ' ').replace(/[ \t]+/g, ' ').trim();
+  const up = PF.norm(all);
+  const out = { val: null, estab: '', final: '', tipo: 'outro', parc: 0, parcVal: null, foreign: false, cardDesc: '', wallet: false };
+  const mv = /(US\$|U\$|R\$)\s*-?\s*(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)/i.exec(all);
+  if (mv) { const v = PF.pNum(mv[2]); out.val = v == null ? null : Math.round(v * 100) / 100; out.foreign = /^U/i.test(mv[1]); }
+  const mf = /\bFINAL\s*(\d{4})\b/.exec(up) || /[•·*]{2,}\s*(\d{4})\b/.exec(all); if (mf) out.final = mf[1];
+  const mp = /\b(\d{1,2})\s*X\b/.exec(up) || /\b(\d{1,2})\s+PARCELAS\b/.exec(up);
+  if (mp && +mp[1] >= 2 && +mp[1] <= 48) out.parc = +mp[1];
+  const mi = /(\d{1,2})\s*x\s+de\s+(?:R\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)/i.exec(all);
+  if (mi && +mi[1] >= 2 && +mi[1] <= 48) { out.parc = +mi[1]; out.parcVal = Math.round(PF.pNum(mi[2]) * 100) / 100; }
+  const has = re => re.test(up);
+  if (has(/\b(NEGAD|RECUSAD|NAO APROVAD|NAO AUTORIZAD|NAO FOI APROVAD|NAO FOI AUTORIZAD|BLOQUEAD|SALDO INSUFICIENTE|LIMITE INSUFICIENTE)/)) out.tipo = 'negada';
+  else if (has(/\b(ESTORN|REEMBOLS|DEVOLV|DEVOLUC|CANCELAD)/)) out.tipo = 'estorno';
+  else if (has(/\bFATURA\b/) && has(/\b(PAGAMENTO|PAGA|PAGO|RECEBID|RECEBEMOS)/)) out.tipo = 'fatura';
+  else if (has(/\b(RECEBEU|RECEBID|RECEBIMENTO|RECEBEMOS|CAIU NA|DEPOSITO RECEBIDO|TRANSFERENCIA RECEBIDA|ENTROU)/)) out.tipo = 'entrada';
+  else if (has(/\bPIX\b/)) out.tipo = 'pix';
+  else if (has(/\bBOLETO\b/)) out.tipo = 'boleto';
+  else if (has(/\bDEBITO\b/)) out.tipo = 'debito';
+  else if (has(/\b(COMPRA|COMPRAR|APROVAD|PAGAMENTO|PAGOU|TRANSACAO|CREDITO)/)) out.tipo = 'compra';
+  /* loja: tira maquininha (MP*, PAG*…), asteriscos, data/hora e a cidade do fim */
+  const merch = s => String(s || '')
+    .replace(/^(?:\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\s*)?(?:(?:às|as)\s*)?(?:\d{1,2}:\d{2}(?::\d{2})?h?\s*)?/i, '')
+    .replace(/^IFD\s*\*\s*/i, 'iFood ').replace(/^UBER\s*\*\s*/i, 'Uber ')
+    .replace(/^(?:MP|MERCADOPAGO|PAG|PAGSEGURO|PAGBANK|PAGBK|PICPAY|SUMUP|STONE|CIELO|GETNET|TON|INFINITEPAY|EC|PP|PG|PGTO)\s*\*\s*/i, '')
+    .replace(/\s*\*\s*/g, ' ').replace(/\s{2,}/g, ' ').replace(/^[-–:\s]+|[-–:\s]+$/g, '').trim()
+    .replace(/\s+(?:ARAGUA[IÍ]NA|PALMAS|IMPERATRIZ|GOI[AÂ]NIA|BRAS[IÍ]LIA|S[AÃ]O PAULO|GURUPI|COLINAS|ARAGUATINS)$/i, '').trim();
+  /* Carteira do Google (e parecidas): título = loja */
+  const fmtWallet = /^\s*(?:US\$|U\$|R\$)\s*[\d.,]+\s+com\s+.+?[•·*]{2,}\s*\d{4}\s*$/i.test(txt);
+  if (fmtWallet || /\b(CARTEIRA|WALLET|GOOGLE PAY|GPAY)\b/.test(PF.norm(app))) {
+    out.wallet = true;
+    const mc = /\bcom\s+(.+?)\s*[•·*]{2,}\s*(\d{4})\b/i.exec(txt);
+    if (mc) { out.cardDesc = mc[1].trim(); if (!out.final) out.final = mc[2]; }
+    if (out.tipo === 'outro' && out.val != null) out.tipo = has(/\bDEBITO\b/) ? 'debito' : 'compra';
+    out.estab = merch(tit).slice(0, 60);
+    return out;
+  }
+  /* bancos e SMS: o nome vem depois do valor */
+  const after = mv ? all.slice(mv.index + mv[0].length) : all;
+  const STOP = '(?=\\s+(?:para\\s+o\\s+cart|para\\s+seu\\s+cart|para\\s+sua\\s+conta|no\\s+cart|no\\s+seu\\s+cart|com\\s+(?:o\\s+|seu\\s+)?cart|pelo\\s+cart|no\\s+d[ée]bito|no\\s+cr[ée]dito|na\\s+fun|via\\s|às\\s|as\\s+\\d|em\\s+\\d|dia\\s+\\d|valor|de\\s+R\\$|foi\\s|est[áa]\\s|n[ãa]o\\s|aprovad|realizad|efetuad|confirmad|conclu[íi]d|limite\\s|saldo\\s)|\\s*[,;!\\n]|\\.(?:\\s|$)|\\s+[-–]\\s|$)';
+  const CAP = new RegExp('^(.+?)' + STOP, 'i');
+  const bad = s => !s || /^(?:o|a|os|as|seu|sua|com|cart|conta|d[ée]bito|cr[ée]dito|valor|dia|hoje|ontem|limite|saldo)\b/i.test(s) || /^\d+\s*x\b/i.test(s) || /^[\d\s/:.,]+$/.test(s);
+  const scan = kw => {
+    const re = new RegExp('(?:^|[\\s:,])(?:' + kw + ')\\s+', 'gi'); let m;
+    while ((m = re.exec(after))) {
+      const c = CAP.exec(after.slice(m.index + m[0].length));
+      const e = c ? merch(c[1]) : '';
+      if (!bad(e)) return e;
+    }
+    return '';
+  };
+  let e = '';
+  if (out.tipo === 'entrada') e = scan('de|do|da');
+  if (!e) e = scan('em|no estabelecimento|na loja|no|na');
+  if (!e) e = scan('para|ao|à|a');
+  if (!e) { const d = /^\s*[-–:]\s*(.+?)(?=\s+[-–]\s|[,;!\n]|\.(?:\s|$)|$)/.exec(after); if (d && !bad(merch(d[1]))) e = merch(d[1]); }
+  if (!e) { const d = /^\s+([A-Z0-9*][^,;!\n]*?)(?=\s+(?:LIMITE|SALDO|DISP)\b|[,;!\n]|\.(?:\s|$)|$)/i.exec(after); if (d && !bad(merch(d[1]))) e = merch(d[1]); }
+  out.estab = e.slice(0, 60);
+  return out;
+};
+
+function pDateTime(s) {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/.exec(String(s || '').trim());
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1], m[4] != null ? +m[4] : 12, +(m[5] || 0), +(m[6] || 0));
+  const n = +s;
+  if (n > 20000 && n < 80000) { const d = new Date(Math.round((n - 25569) * 864e5)); return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()); }
+  return null;
+}
+function parseCx(raw) {
+  const t = tableOf(raw); if (!t.length) return [];
+  const H = (t[0] || []).map(PF.norm), ix = n => H.indexOf(n);
+  const c = { at: ix('RECEBIDO EM'), cel: ix('CELULAR'), app: ix('APP'), tit: ix('TITULO'), txt: ix('TEXTO'), sit: ix('SITUACAO'), lan: ix('LANCAMENTO') };
+  const out = [];
+  for (let i = 1; i < t.length; i++) {
+    const r = t[i] || [], g = k => str(cell(r, c[k]));
+    const titulo = g('tit'), texto = g('txt'); if (!titulo && !texto) continue;
+    const it = { row: i + 1, at: pDateTime(g('at')), cel: g('cel'), app: g('app'), titulo, texto, sit: PF.norm(g('sit')).toLowerCase() || 'novo', lanc: g('lan') };
+    it.p = PF.parseNotif(it);
+    out.push(it);
+  }
+  return out;
+}
+/* a mesma compra avisada por mais de um app (Carteira do Google + app do banco + SMS) vira um item só:
+   mesmo valor, mesmo cartão (ou mesma loja), até 15 minutos de diferença, no máximo um aviso de cada app */
+PF.cxGroups = function (M) {
+  const items = (M && M.cx ? M.cx : []).filter(x => x.sit === 'novo').sort((a, b) => ((a.at ? +a.at : 0) - (b.at ? +b.at : 0)) || a.row - b.row);
+  const src = x => PF.norm(x.app) + (/\b(MENSAGENS|MESSAGES|SMS)\b/.test(PF.norm(x.app)) ? '|' + PF.norm(x.titulo) : '');
+  const used = new Set(), out = [];
+  for (const it of items) {
+    if (used.has(it.row)) continue;
+    used.add(it.row);
+    const g = [it];
+    if (it.p.val != null) for (const o of items) {
+      if (used.has(o.row) || o.p.val == null || Math.abs(o.p.val - it.p.val) > 0.004) continue;
+      if (!(it.at && o.at && Math.abs(o.at - it.at) <= 15 * 60000)) continue;
+      if (g.some(x => src(x) === src(o))) continue;
+      const f1 = (g.find(x => x.p.final) || {}).p, e1 = PF.norm(it.p.estab);
+      const same = f1 && o.p.final ? f1.final === o.p.final : !!e1 && e1 === PF.norm(o.p.estab);
+      if (same) { g.push(o); used.add(o.row); }
+    }
+    const score = x => (x.p.estab ? 2 : 0) + (x.p.final ? 2 : 0) + (x.p.wallet ? 1 : 0);
+    g.sort((a, b) => score(b) - score(a) || a.row - b.row);
+    out.push({ main: g[0], rows: g.map(x => x.row), also: g.slice(1) });
+  }
+  return out.sort((a, b) => b.main.row - a.main.row);
+};
+
 /* ---------- modelo ---------- */
 PF.build = function (raw) {
   const M = { raw };
@@ -776,6 +909,7 @@ PF.build = function (raw) {
   M.pag = raw.pag ? parsePag(raw.pag) : [];
   M.aud = raw.aud ? parseAud(raw.aud) : null;
   M.cap = raw.cap ? parseCap(raw.cap) : null;
+  M.cx = raw.cx ? parseCx(raw.cx) : [];
   M.respMap = new Map(M.cad.resp.map(r => [r.name, r]));
   M.cardMap = new Map(M.cad.cards.map(c => [c.name, c]));
   M.catMap = new Map(M.cad.cats.map(c => [c.name, c]));
@@ -1868,7 +2002,8 @@ const L = PF.L = {
   mode: 'compra',
   f: { val: '', tipo: 'VARIÁVEL', parc: '', pa: '1', resp: '', card: '', desc: '', cat: '', catAuto: false, date: '', mesFat: '', obs: '' },
   more: false, contas: {}, cMes: null, busy: false, msg: null, last: null,
-  x: { val: '', desc: '', resp: '', conta: 'brad', date: '' }, xlast: null
+  x: { val: '', desc: '', resp: '', conta: 'brad', date: '' }, xlast: null,
+  cxBusy: null, cxForm: null, cxMsg: null, cxAll: false, cxDone: null, cxQuiet: false
 };
 const META_EXTRA = 1000;   // renda extra prevista no plano do casal
 try { const o = JSON.parse(localStorage.getItem(LS) || '{}'); if (o.resp) L.f.resp = o.resp; if (o.card) L.f.card = o.card; if (o.xresp) L.x.resp = o.xresp; if (o.xconta) L.x.conta = o.xconta; } catch (e) { }
@@ -1969,7 +2104,7 @@ function formCompra(M, X) {
   const mf = '<select id="lf-mesfat" aria-label="Mês da fatura">' + meses.map(k => '<option value="' + k + '"' + (k === f.mesFat ? ' selected' : '') + '>' + (k ? PF.lab(+k) : 'Automático') + '</option>').join('') + '</select>';
   const parc = f.tipo === 'PARCELADO' ? '<div class="lf-2"><label class="lf-field"><span class="lf-lab">Parcelas</span><input id="lf-parc" inputmode="numeric" placeholder="10" value="' + esc(f.parc) + '"></label><label class="lf-field"><span class="lf-lab">Parcela atual</span><input id="lf-pa" inputmode="numeric" value="' + esc(f.pa) + '"></label></div>' : '';
   const th = totalHelp();
-  return '' +
+  return cxLinkNote('compra') +
     '<div class="lf-field"><label class="lf-lab" for="lf-val">Valor' + (f.tipo === 'PARCELADO' ? ' da parcela' : '') + '</label><div class="lf-money"><span>R$</span><input id="lf-val" inputmode="decimal" placeholder="0,00" autocomplete="off" value="' + esc(f.val) + '"></div></div>' +
     '<div class="lf-field">' + PF.seg('l-tipo', [['VARIÁVEL', 'À vista'], ['PARCELADO', 'Parcelado'], ['FIXO', 'Fixo todo mês']], f.tipo) + (th ? '<p class="lf-help" id="lf-total">' + th + '</p>' : '') + '</div>' +
     parc +
@@ -2019,7 +2154,7 @@ function formExtra(M) {
   const fin = k != null && PF.closedInfo && PF.closedInfo(M, k) ? ' <b style="color:var(--warn)">Atenção: ' + PF.lab(k) + ' já foi finalizado.</b>' : '';
   const dd = r => { const mm = /recebida em (\d{2})\/(\d{2})/i.exec(r.obs || ''); return mm ? mm[1] + '/' + mm[2] : PF.lab(r.ini); };
   const linhas = lista.length ? '<div class="lx-list">' + lista.map(r => '<div><span class="muted num" style="color:var(--ink-3);font-weight:400;text-align:left">' + dd(r) + '</span><span>' + esc(r.desc) + '<small>' + esc(r.resp) + '</small></span><span class="num">+' + PF.brl(r.val) + '</span></div>').join('') + '</div>' : '<p class="lf-help">Nenhuma renda extra lançada em ' + PF.lab(now) + ' ainda.</p>';
-  return '' +
+  return cxLinkNote('extra') +
     '<div class="lf-field"><label class="lf-lab" for="lx-val">Valor recebido</label><div class="lf-money"><span>R$</span><input id="lx-val" inputmode="decimal" placeholder="0,00" autocomplete="off" value="' + esc(x.val) + '"></div></div>' +
     '<div class="lf-field"><label class="lf-lab" for="lx-desc">O que foi</label><input id="lx-desc" list="lx-descs" placeholder="Ex.: personal avulso, avaliação, aula extra" autocomplete="off" value="' + esc(x.desc) + '"><datalist id="lx-descs">' + descs.map(d => '<option value="' + esc(d) + '">').join('') + '</datalist></div>' +
     '<div class="lf-field"><span class="lf-lab">Quem recebeu</span><div class="chips">' + casal.map(n => chip('l-xresp', n, n, n === x.resp, PF.respColor(M, n))).join('') + '</div></div>' +
@@ -2046,6 +2181,166 @@ function recent(M) {
   ], rows);
 }
 
+/* ---------- compras novas: notificações do banco (aba CAIXA DE ENTRADA) ---------- */
+const CX_SHEET = "'CAIXA DE ENTRADA'";
+const BANKS = [['MERCADO PAGO', 'MP'], ['MERCADOPAGO', 'MP'], ['NUBANK', 'NUBANK'], ['NU PAGAMENTOS', 'NUBANK'], ['BRADESCARD', 'BRADESCO'], ['BRADESCO', 'BRADESCO'], ['INTER', 'INTER'], ['DIGIO', 'DIGIO'], ['SANTANDER', 'SANTANDER'], ['CREDICARD', 'CREDCARD'], ['CREDCARD', 'CREDCARD'], ['ITI', 'ITI'], ['PAN', 'PAN'], ['BANCO DO BRASIL', 'BB'], ['OUROCARD', 'BB'], ['BB', 'BB'], ['C6', 'C6'], ['PICPAY', 'PICPAY'], ['ITAU', 'ITAU'], ['CAIXA', 'CAIXA'], ['NEON', 'NEON'], ['WILL', 'WILL'], ['PAGBANK', 'PAGBANK']];
+const CX_STOP = /^(LTDA|EIRELI|COMERCIO|COM|DE|DO|DA|DOS|DAS|LOJA|LOJAS|SUPERMERCADO|MERCADO|MERCADINHO|FARMACIA|DROGARIA|POSTO|RESTAURANTE|PADARIA|ARAGUAINA|PALMAS|BRASIL|SHOPPING|CENTER|CENTRO)$/;
+const CX_TAG = { negada: ['bad', 'Compra negada'], estorno: ['warn', 'Estorno'], entrada: ['good', 'Dinheiro entrando'], fatura: ['acc', 'Pagamento de fatura'], outro: ['', 'Sem valor'] };
+const titleCase = s => String(s || '').toLowerCase().replace(/(^|[\s(/-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+const isoOf = d => d ? d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) : '';
+const hasWord = (txt, w) => (' ' + txt + ' ').indexOf(' ' + w + ' ') >= 0;
+const cxItem = row => ((PF.M && PF.M.cx) || []).find(x => x.row === row);
+const cxGroup = row => PF.cxGroups(PF.M).find(g => g.main.row === row);
+function cxWhen(d) {
+  if (!d) return '';
+  const now = new Date(), hm = pad(d.getHours()) + ':' + pad(d.getMinutes());
+  const same = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  if (same(d, now)) return 'hoje, ' + hm;
+  const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  return same(d, y) ? 'ontem, ' + hm : pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ', ' + hm;
+}
+function cxObs(it) {
+  const d = it.at;
+  return ['Notificação ' + (it.app || 'do banco'), it.p.final ? 'final ' + it.p.final : '', it.p.estab, d ? pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) : ''].filter(Boolean).join(' · ');
+}
+/* o que já foi lançado a partir de notificações ensina: final do cartão → cartão; loja → descrição, quem e categoria */
+function cxLearn(M) {
+  if (M._cxL) return M._cxL;
+  const fin = new Map(), est = new Map();
+  M.led.slice().sort((a, b) => a.row - b.row).forEach(r => {
+    const o = String(r.obs || ''); if (!/^notifica/i.test(o)) return;
+    const parts = o.split(' · ').map(x => x.trim());
+    const f = parts.map(x => /^final (\d{4})$/i.exec(x)).find(Boolean);
+    if (f && r.card) fin.set(f[1], r.card);
+    const e = parts.slice(1).find(x => !/^final \d{4}$/i.test(x) && !/^\d{1,2}\/\d{1,2}\b/.test(x));
+    if (e) est.set(PF.norm(e), r);
+  });
+  return (M._cxL = { fin, est });
+}
+function cxCard(M, it, h) {
+  const p = it.p, cards = M.cad.cards.filter(c => c.ativo);
+  const pixCard = cards.find(c => /\bPIX\b|\bDEBITO\b/.test(PF.norm(c.name)));
+  if (['debito', 'pix', 'boleto'].indexOf(p.tipo) >= 0 && pixCard) return pixCard.name;
+  const L2 = cxLearn(M);
+  if (p.final && L2.fin.has(p.final) && M.cardMap.has(L2.fin.get(p.final))) return L2.fin.get(p.final);
+  const bank = PF.norm(p.wallet && p.cardDesc ? p.cardDesc : it.app + ' ' + it.titulo), b = BANKS.find(k => hasWord(bank, k[0]));
+  if (b) {
+    const cand = cards.filter(c => hasWord(PF.norm(c.name), b[1]));
+    if (cand.length > 1 && it.cel) { const who = PF.norm(it.cel), mine = cand.filter(c => PF.norm(c.titular) === who); if (mine.length) return mine[0].name; }
+    if (cand.length) return cand[0].name;
+  }
+  if (h && h.card && M.cardMap.has(h.card)) return h.card;
+  return '';
+}
+function cxSuggest(M, it) {
+  const p = it.p, L2 = cxLearn(M), est = PF.norm(p.estab);
+  let h = est ? L2.est.get(est) || null : null, how = h ? 'como da última vez' : '';
+  if (!h && est) {
+    const words = est.split(' ').filter(w => w.length >= 4 && !CX_STOP.test(w));
+    let best = null;
+    for (const r of M.led) {
+      const d = PF.norm(r.desc); if (!d || d === 'A DESCREVER' || d.length < 3) continue;
+      const hit = d === est || (d.length >= 5 && est.indexOf(d) >= 0) || (d.length >= 3 && !CX_STOP.test(d) && hasWord(est, d)) || words.some(w => hasWord(d, w));
+      if (hit && (!best || r.row > best.row)) best = r;
+    }
+    if (best) { h = best; how = 'pelo histórico: ' + best.desc; }
+  }
+  const s = { desc: h ? h.desc : (p.estab ? titleCase(p.estab) : ''), resp: h && h.resp && M.respList.indexOf(h.resp) >= 0 ? h.resp : '', cat: h && h.cat && PF.norm(h.cat) !== 'A CLASSIFICAR' ? h.cat : '', card: cxCard(M, it, h), how };
+  s.ok = !!(p.val > 0 && !p.foreign && !(p.parc > 1) && s.resp && s.card && M.cardMap.has(s.card) && ['compra', 'debito', 'pix', 'boleto'].indexOf(p.tipo) >= 0);
+  return s;
+}
+const cxBtn = (act, v, label, cls) => '<button type="button" class="btn sm' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" data-v="' + v + '"' + (L.busy || L.cxBusy ? ' disabled' : '') + '>' + esc(label) + '</button>';
+function cxLinkNote(kind) {
+  const c = L.cxForm; if (!c || c.kind !== kind) return '';
+  const it = cxItem(c.rows[0]); if (!it) return '';
+  const p = it.p;
+  return '<div class="lf-msg info cx-link"><span>Da notificação ' + esc(it.app || '') + ': <b>' + (p.val != null ? PF.brl(p.val) : '') + '</b> ' + esc(p.estab || '') + (p.parc > 1 ? ' em ' + p.parc + 'x. Confira o valor de cada parcela.' : '. Confira e toque em Lançar.') + '</span><button type="button" class="btn sm" data-act="cx-unlink">Soltar</button></div>';
+}
+function inbox(M) {
+  if (PF.mode !== 'live') return '';
+  const groups = PF.cxGroups(M);
+  if (!groups.length && !L.cxMsg) return '';
+  const show = L.cxAll ? groups : groups.slice(0, 6);
+  const li = show.map(g => {
+    const it = g.main, p = it.p, s = cxSuggest(M, it), tag = CX_TAG[p.tipo], row = it.row;
+    const name = s.desc || p.estab || it.titulo || it.app || 'Notificação';
+    const card = p.cardDesc ? titleCase(p.cardDesc) : '';
+    const meta = [card || it.app, p.final ? 'final ' + p.final : '', cxWhen(it.at)].filter(Boolean).join(' · ') + (g.also.length ? ' · também avisado por ' + g.also.map(x => /\b(MENSAGENS|MESSAGES|SMS)\b/.test(PF.norm(x.app)) ? 'SMS ' + x.titulo : x.app).filter((v, i, a) => v && a.indexOf(v) === i).join(', ') : '');
+    let sug = '';
+    if (!tag && p.tipo !== 'entrada') sug = s.resp ? '<small class="cx-sug">' + [s.resp, s.cat || 'A classificar', s.card].filter(Boolean).map(esc).join(' · ') + (s.how ? ' <span class="muted">(' + esc(s.how) + ')</span>' : '') + '</small>' : '<small class="cx-sug">' + (s.card ? esc(s.card) + ' · ' : '') + 'falta escolher quem gastou</small>';
+    let acts;
+    if (p.tipo === 'entrada') acts = cxBtn('cx-extra', row, 'Lançar como renda extra', 'primary') + cxBtn('cx-skip', row, 'Ignorar');
+    else if (p.tipo === 'negada' || p.tipo === 'fatura') acts = cxBtn('cx-skip', row, 'Tirar da lista', 'primary');
+    else if (p.tipo === 'estorno') acts = cxBtn('cx-skip', row, 'Ignorar', 'primary') + cxBtn('cx-fill', row, 'Lançar mesmo assim');
+    else if (s.ok) acts = cxBtn('cx-go', row, 'Lançar ' + PF.brl(p.val), 'primary') + cxBtn('cx-fill', row, 'Editar') + cxBtn('cx-skip', row, 'Ignorar');
+    else acts = cxBtn('cx-fill', row, 'Preencher e lançar', 'primary') + cxBtn('cx-skip', row, 'Ignorar');
+    return '<li class="cx-it' + (L.cxBusy === row ? ' busy' : '') + '"><div class="cx-m"><span class="cx-v num">' + (p.val != null ? PF.brl(p.val) + (p.foreign ? ' (US$)' : '') : '—') + '</span> <span class="cx-n">' + esc(name) + '</span>' +
+      (tag ? ' <span class="pill ' + tag[0] + '">' + tag[1] + '</span>' : '') + (p.parc > 1 ? ' <span class="pill warn">' + p.parc + 'x</span>' : '') +
+      '<small>' + esc(meta) + '</small>' + sug + '</div><div class="cx-a">' + acts + '</div></li>';
+  }).join('');
+  const m = L.cxMsg;
+  const msg = m ? '<div class="lf-msg ' + m.t + '"><span>' + m.h + '</span>' + (m.undo && L.last && L.last.cx ? '<button type="button" class="btn sm" data-act="cx-undo"' + (L.busy ? ' disabled' : '') + '>Desfazer</button>' : '') + (m.unskip ? '<button type="button" class="btn sm" data-act="cx-unskip" data-v="' + m.unskip + '">Desfazer</button>' : '') + '</div>' : '';
+  const more = groups.length > show.length || L.cxAll ? '<button type="button" class="btn sm" data-act="cx-all">' + (L.cxAll ? 'Ver menos' : 'Ver todas (' + groups.length + ')') + '</button>' : '';
+  return '<section class="panel cx" aria-label="Compras novas"><header><div><h2>Compras novas ' + (groups.length ? '<span class="pill acc">' + groups.length + '</span>' : '') + '</h2><p class="sub">' + (groups.length ? 'Chegaram sozinhas das notificações do celular. Confira e lance com um toque.' : 'Tudo em dia: nenhuma compra esperando.') + '</p></div>' + more + '</header>' + msg + (li ? '<ul class="cx-list">' + li + '</ul>' : '') + '</section>';
+}
+/* marca na aba CAIXA DE ENTRADA; os avisos repetidos da mesma compra ficam como "duplicada" */
+async function cxMark(rows, sit, info) {
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i], s = i > 0 && sit === 'lançado' ? 'duplicada' : sit, inf = i === 0 ? (info || '') : (sit === 'lançado' ? 'mesma compra: ' + info : '');
+    await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range: CX_SHEET + '!F' + r + ':G' + r, values: [[s, inf]] });
+    const it = cxItem(r); if (it) { it.sit = PF.norm(s).toLowerCase(); it.lanc = inf; }
+  }
+}
+async function cxAfter() {
+  const d = L.cxDone; L.cxDone = null;
+  if (d) {
+    try { await cxMark(d.rows, 'lançado', d.info); if (d.h) L.cxMsg = { t: 'good', h: d.h, undo: true }; }
+    catch (e) { L.cxMsg = { t: 'warn', h: 'Lançado (' + esc(d.info) + '), mas não consegui tirar a notificação da lista. Toque em Ignorar nela.' }; }
+  }
+  L.cxBusy = null; L.cxQuiet = false; PF.render();
+}
+function cxGo(row) {
+  const M = PF.M, g = cxGroup(row); if (!M || !g || L.busy || L.cxBusy) return;
+  const it = g.main, s = cxSuggest(M, it), p = it.p;
+  if (!s.ok) { cxFill(row); return; }
+  const desc = s.desc || 'A DESCREVER';
+  const r = [isoToBR(isoOf(it.at) || isoToday()), desc, s.resp, s.card, s.cat || 'A classificar', 'VARIÁVEL', p.val, 1, 1, 'Não', '', '', cxObs(it)];
+  L.cxBusy = row; L.cxMsg = null; L.cxQuiet = true;
+  write([r], first => { L.last.cx = g.rows; L.cxDone = { rows: g.rows, info: 'LANÇAMENTOS linha ' + first, h: '<b>' + PF.brl(p.val) + '</b> lançado: ' + esc(desc) + ' (' + esc(s.resp) + ', ' + esc(s.card) + '), linha ' + first + '.' }; }).then(cxAfter);
+}
+function cxFill(row) {
+  const M = PF.M, g = cxGroup(row); if (!M || !g || L.busy) return;
+  const it = g.main, s = cxSuggest(M, it), p = it.p, n = p.parc > 1 ? p.parc : 0;
+  const v = n ? (p.parcVal || (p.val != null ? Math.round(p.val / n * 100) / 100 : null)) : p.val;
+  L.mode = 'compra';
+  Object.assign(L.f, { val: v != null ? nf2.format(v) : '', tipo: n ? 'PARCELADO' : 'VARIÁVEL', parc: n ? String(n) : '', pa: '1', desc: s.desc || '', cat: s.cat || '', catAuto: !!s.cat, date: isoOf(it.at), mesFat: '', obs: cxObs(it), resp: s.resp || '', card: s.card || '' });
+  L.cxForm = { rows: g.rows, kind: 'compra' };
+  L.more = true; L.msg = null; L.cxMsg = null;
+  PF.render();
+  const el = document.getElementById('lf-val'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+function cxExtra(row) {
+  const M = PF.M, g = cxGroup(row); if (!M || !g || L.busy) return;
+  const it = g.main, p = it.p;
+  L.mode = 'extra';
+  Object.assign(L.x, { val: p.val != null ? nf2.format(p.val) : '', desc: p.estab ? 'Pix de ' + titleCase(p.estab) : 'Pix recebido', date: isoOf(it.at) });
+  if (!hasWord(PF.norm(it.app + ' ' + it.titulo), 'BRADESCO')) L.x.conta = 'fora';
+  L.cxForm = { rows: g.rows, kind: 'extra' }; L.msg = null; L.cxMsg = null;
+  PF.render();
+  const el = document.getElementById('lx-val'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+async function cxSkip(row, rows) {
+  const g = rows ? null : cxGroup(row), rs = rows || (g && g.rows); if (!rs || !PF.mcp || L.cxBusy || L.busy) return;
+  const it = cxItem(rs[0]);
+  L.cxBusy = row; PF.render();
+  try {
+    await cxMark(rs, rows ? 'novo' : 'ignorado', '');
+    L.cxMsg = rows ? null : { t: 'info', h: 'Fora da lista: ' + esc((it && (it.p.estab || it.titulo || it.app)) || 'notificação') + (it && it.p.val != null ? ' (' + PF.brl(it.p.val) + ')' : '') + '.', unskip: rs.join('-') };
+    if (L.cxForm && L.cxForm.rows[0] === rs[0]) L.cxForm = null;
+  } catch (err) { L.cxMsg = errMsg(err, true); }
+  finally { L.cxBusy = null; refresh(); PF.render(); }
+}
+
 let focusKeep = null;
 V.lancar = function (M) {
   const ae = document.activeElement;
@@ -2054,7 +2349,7 @@ V.lancar = function (M) {
   if (L.f.resp && M.respList.indexOf(L.f.resp) < 0) L.f.resp = '';
   if (L.f.card && !M.cardMap.has(L.f.card)) L.f.card = '';
   const body = L.mode === 'contas' ? formContas(M) : (L.mode === 'extra' ? formExtra(M) : formCompra(M, X));
-  const h = '<div class="lanc"><section class="panel lf" aria-label="Novo lançamento"><div class="lf-head">' + PF.seg('l-mode', [['compra', 'Compra'], ['contas', 'Contas do mês'], ['extra', 'Renda extra']], L.mode) + '</div>' + liveNote() + body + msgBox() + '</section>' +
+  const h = inbox(M) + '<div class="lanc"><section class="panel lf" aria-label="Novo lançamento"><div class="lf-head">' + PF.seg('l-mode', [['compra', 'Compra'], ['contas', 'Contas do mês'], ['extra', 'Renda extra']], L.mode) + '</div>' + liveNote() + body + msgBox() + '</section>' +
     '<section class="panel lr"><h2>Últimos lançamentos</h2><p class="sub">Para corrigir ou apagar, abra a linha na planilha. Na primeira gravação o painel pede permissão para escrever no Google Sheets.</p>' + recent(M) + '</section></div>';
   return {
     title: 'Lançar', sub: L.mode === 'extra' ? 'Grava direto na aba RECEITAS da planilha' : 'Grava direto na aba LANÇAMENTOS da planilha', html: h,
@@ -2118,7 +2413,7 @@ async function write(rows, done) {
     wrote = true;
     L.last = { first, n: rows.length, rows };
     L.msg = { t: 'good', h: rows.length === 1 ? 'Lançado na planilha, linha ' + first + '.' : rows.length + ' lançamentos gravados, linhas ' + first + ' a ' + lastRow + '.', undo: true };
-    done();
+    done(first);
     PF.toast(rows.length === 1 ? 'Lançado' : rows.length + ' contas lançadas');
   } catch (err) {
     L.msg = errMsg(err, true);
@@ -2126,7 +2421,7 @@ async function write(rows, done) {
     L.busy = false;
     refresh();
     PF.render();
-    if (wrote) { const v = document.getElementById(L.mode === 'contas' ? 'lc-0' : 'lf-val'); if (v && L.mode !== 'contas') try { v.focus({ preventScroll: true }); } catch (e) { } }
+    if (wrote && !L.cxQuiet) { const v = document.getElementById(L.mode === 'contas' ? 'lc-0' : 'lf-val'); if (v && L.mode !== 'contas') try { v.focus({ preventScroll: true }); } catch (e) { } }
   }
 }
 function saveCompra() {
@@ -2145,7 +2440,8 @@ function saveCompra() {
   if (!dbr) return fail('Data inválida.');
   const row = [dbr, f.desc.trim() || 'A DESCREVER', f.resp, f.card, f.cat || 'A classificar', f.tipo, v, n, pa, f.tipo === 'FIXO' ? 'Todo mês' : 'Não', '', f.mesFat ? firstBR(+f.mesFat) : '', f.obs.trim()];
   if (!M.respMap.has(f.resp) || !M.cardMap.has(f.card)) return fail('Responsável ou cartão não está em CADASTROS.');
-  write([row], () => { L.f.val = ''; L.f.desc = ''; L.f.cat = ''; L.f.catAuto = false; L.f.parc = ''; L.f.pa = '1'; L.f.obs = ''; L.f.mesFat = ''; L.f.tipo = 'VARIÁVEL'; savePrefs(); });
+  const cx = L.cxForm && L.cxForm.kind === 'compra' ? L.cxForm.rows : null;
+  write([row], first => { L.f.val = ''; L.f.desc = ''; L.f.cat = ''; L.f.catAuto = false; L.f.parc = ''; L.f.pa = '1'; L.f.obs = ''; L.f.mesFat = ''; L.f.tipo = 'VARIÁVEL'; savePrefs(); if (cx) { L.f.date = ''; L.last.cx = cx; L.cxDone = { rows: cx, info: 'LANÇAMENTOS linha ' + first }; L.cxForm = null; } }).then(cxAfter);
 }
 function saveContas() {
   const M = PF.M, T = L.cMes != null ? L.cMes : PF.nowIdx(), C = contas(M, T), d = firstBR(T);
@@ -2168,6 +2464,7 @@ async function undo() {
     const same = l.rows.every((r, i) => { const x = vals[i] || []; return [1, 2, 3].every(j => PF.norm(x[j]) === PF.norm(r[j])); });
     if (!same) { L.msg = { t: 'warn', h: 'Essas linhas mudaram depois do lançamento. Para apagar, abra a linha na planilha.' }; return; }
     await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range, values: l.rows.map(r => r.map(() => '')) });
+    if (l.cx) { try { await cxMark(l.cx, 'novo', ''); } catch (e) { } L.cxMsg = null; }
     L.last = null; L.msg = { t: 'info', h: l.n === 1 ? 'Lançamento desfeito.' : 'Lançamentos desfeitos.' };
   } catch (err) {
     L.msg = errMsg(err, true);
@@ -2207,6 +2504,7 @@ async function saveExtra() {
       catch (e2) { sx = ' Não consegui somar no saldo do Bradesco; confira em Contas a pagar.'; }
     }
     L.xlast = { row, v, desc, bumped };
+    if (L.cxForm && L.cxForm.kind === 'extra') { const cr = L.cxForm.rows; L.cxForm = null; try { await cxMark(cr, 'lançado', 'RECEITAS linha ' + row); L.xlast.cx = cr; } catch (e3) { sx += ' Não consegui tirar a notificação da lista.'; } }
     L.msg = { t: 'good', h: '<b>+' + PF.brl(v) + '</b> de ' + esc(desc) + ' (' + esc(x.resp) + ') nas receitas de ' + PF.lab(k) + '.' + sx, xundo: true };
     x.val = ''; x.desc = ''; x.date = '';
     savePrefs();
@@ -2230,6 +2528,7 @@ async function undoExtra() {
     await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range, values: [['', '', '', '', '', '', '', '']] });
     M.rec = M.rec.filter(x => x.row !== l.row); M._met = new Map();
     if (l.bumped && PF.bumpSaldo) { try { await PF.bumpSaldo(-l.v); } catch (e) { } }
+    if (l.cx) { try { await cxMark(l.cx, 'novo', ''); } catch (e) { } }
     L.xlast = null; L.msg = { t: 'info', h: 'Renda extra desfeita.' };
   } catch (err) {
     L.msg = errMsg(err, true);
@@ -2253,8 +2552,16 @@ function liveLabels() {
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-act]'); if (!t || !PF.M) return;
   const a = t.dataset.act, v = t.dataset.v;
-  if (a.indexOf('l-') !== 0) return;
+  if (a.indexOf('l-') !== 0 && a.indexOf('cx-') !== 0) return;
   switch (a) {
+    case 'cx-all': L.cxAll = !L.cxAll; PF.render(); break;
+    case 'cx-go': cxGo(+v); break;
+    case 'cx-fill': cxFill(+v); break;
+    case 'cx-extra': cxExtra(+v); break;
+    case 'cx-skip': cxSkip(+v); break;
+    case 'cx-unskip': { const rs = String(v).split('-').map(Number); L.cxMsg = null; cxSkip(rs[0], rs); break; }
+    case 'cx-unlink': L.cxForm = null; PF.render(); break;
+    case 'cx-undo': L.cxMsg = null; undo(); break;
     case 'l-mode': L.mode = v; L.msg = null; PF.render(); break;
     case 'l-xmode': L.mode = 'extra'; L.msg = null; break;   /* o data-tab do mesmo botão abre a tela Lançar */
     case 'l-xresp': L.x.resp = v; savePrefs(); PF.render(); break;
@@ -3212,15 +3519,23 @@ function finBanner() {
     '<div class="acts">' + go + '<button type="button" class="btn" data-act="fin-ok">Ver ' + esc(nome) + ' mesmo assim</button></div></section>';
 }
 
+/* ---------- aviso de compras novas vindas das notificações ---------- */
+function cxBar() {
+  const M = PF.M; if (!M || PF.mode !== 'live' || S.tab === 'lancar') return '';
+  const n = PF.cxGroups(M).length; if (!n) return '';
+  return '<div class="cxbar" role="status"><span class="tx"><b>' + n + (n === 1 ? ' compra nova chegou' : ' compras novas chegaram') + '</b> das notificações do celular.</span><button type="button" class="btn sm primary" data-tab="lancar">Revisar e lançar</button></div>';
+}
+
 /* ---------- desenho ---------- */
 function skeleton() {
   const k = '<div class="kpi"><div class="sk" style="height:10px;width:55%"></div><div class="sk" style="height:26px;width:70%"></div><div class="sk" style="height:12px;width:90%"></div></div>';
   return '<div class="kpis">' + new Array(8).fill(k).join('') + '</div><div class="grid gw"><div class="panel"><div class="sk" style="height:270px"></div></div><div class="panel"><div class="sk" style="height:270px"></div></div></div>';
 }
 function updateBadge() {
-  const b = $('pendBadge'); if (!b) return;
-  const n = PF.M ? PF.pendencias(PF.M).total : 0;
-  b.hidden = !n; b.textContent = n;
+  const b = $('pendBadge');
+  if (b) { const n = PF.M ? PF.pendencias(PF.M).total : 0; b.hidden = !n; b.textContent = n; }
+  const c = $('cxBadge');
+  if (c) { const k = PF.M && PF.mode === 'live' ? PF.cxGroups(PF.M).length : 0; c.hidden = !k; c.textContent = k; }
 }
 function setLive(state, txt) { const l = $('live'); l.dataset.s = state; $('liveTxt').textContent = txt; }
 function hhmm(ts) { const d = new Date(ts); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
@@ -3246,7 +3561,7 @@ PF.render = function (o) {
     out = { title: TABS[S.tab], sub: '', html: '<div class="panel">' + PF.empty('Não foi possível montar esta tela', esc(String(e && e.message || e))) + '</div>' };
   }
   const y = window.scrollY;
-  view.innerHTML = finBanner() + out.html;
+  view.innerHTML = finBanner() + cxBar() + out.html;
   $('vTitle').textContent = out.title; $('vSub').textContent = (PF.mode === 'demo' ? 'EXEMPLO · ' : '') + (out.sub || '');
   fillMonthSelect(); updateBadge(); updateFoot();
   if (out.after) { try { out.after(); } catch (e) { console.error(e); } }
