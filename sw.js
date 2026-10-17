@@ -1,5 +1,5 @@
 /* Finanças — service worker: guarda os arquivos do app no celular. Os dados vêm sempre da planilha (pela ponte). */
-const CACHE = 'financas-67fb08ade0';
+const CACHE = 'financas-a94d824dae';
 const SHELL = ['./', './ponte.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 const LIBS = ['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'];
 
@@ -20,7 +20,8 @@ function networkFirst(req) {
     let done = false;
     const finish = r => { if (!done && r) { done = true; resolve(r); } };
     const timer = setTimeout(() => fromCache().then(finish), 3500);
-    fetch(req).then(r => {
+    // sempre confere com o servidor (o GitHub Pages manda guardar por 10 min; assim a versão nova chega na hora)
+    (nav ? fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }) : fetch(new Request(req, { cache: 'no-cache' }))).then(r => {
       if (r && r.ok && r.type === 'basic') { const cp = r.clone(); caches.open(CACHE).then(c => c.put(req, cp)); }
       clearTimeout(timer); finish(r);
     }).catch(() => fromCache().then(r => { clearTimeout(timer); finish(r || Response.error()); }));

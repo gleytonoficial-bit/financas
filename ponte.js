@@ -293,5 +293,13 @@
   /* app instalável: guarda os arquivos do app no celular para abrir rápido, mesmo sem sinal */
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname))) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }); });
+    /* chegou versão nova do app: recarrega uma vez (se ninguém estiver digitando) */
+    var hadCtl = !!navigator.serviceWorker.controller, reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadCtl || reloaded) return;
+      var a = document.activeElement;
+      if (document.getElementById('cfgBox') || (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+      reloaded = true; location.reload();
+    });
   }
 })();
