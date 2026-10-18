@@ -1654,12 +1654,10 @@ V.pessoas = function (M) {
     h += '<div class="grid">' + PF.panel('Por pessoa', PF.labC(m), PF.bars(pItems, { total: tot, totalRow: 1, emptyMsg: 'Nenhuma das pessoas marcadas tem gasto neste mês.' })) + '</div>';
   }
 
-  const cols = [{ h: 'Descrição', f: r => '<span title="' + esc(r.desc) + '">' + esc(r.desc) + '</span>' + (r.pend && r.pend !== 'OK' ? ' <span class="pill warn">' + esc(r.pend) + '</span>' : ''), cls: 'ds' }];
-  if (multi) cols.push({ h: 'Quem', f: r => '<span class="dot" style="background:' + PF.respColor(M, r.resp) + '"></span>' + esc(r.resp), cls: 'nw' });
-  cols.push({ h: 'Cartão ou conta', f: r => esc(r.card), cls: 'nw' }, { h: 'Categoria', f: r => esc(r.cat), cls: 'nw' }, { h: 'Tipo', f: r => esc(r.tipo.charAt(0) + r.tipo.slice(1).toLowerCase()), cls: 'nw muted' },
-    { h: 'Parcela', f: r => esc(PF.parcelaTxt(r, m)), cls: 'c nw num' }, { h: 'Valor', f: r => PF.money(r.val), cls: 'r' }, { h: '', f: r => PF.rowLink(PF.GID.led, r.row, ''), cls: 'nw' });
-  const body = rows.length ? PF.tbl(cols, rows.slice().sort((a, b) => b.val - a.val), { foot: '<tr class="tot"><td colspan="' + (cols.length - 2) + '">Total</td><td class="r">' + PF.money(tot) + '</td><td></td></tr>' }) : PF.empty('Nada lançado para ' + label, 'Sem lançamentos ativos em ' + PF.lab(m) + '.');
-  h += '<div class="grid">' + PF.panel('Lançamentos de ' + esc(label), PF.labC(m), body, multi && recN.length ? { hint: 'Para o extrato pronto para copiar e o botão Recebi, deixe só uma pessoa marcada.' } : null) + '</div>';
+  // mesma lista da Visão geral: busca + filtros de cartão, quem, categoria e tipo, ordenação pelo cabeçalho
+  S.ledPred = r => sel.indexOf(r.resp) >= 0;
+  h += '<div class="grid">' + PF.ledPanel(M, 'Lançamentos de ' + esc(label)) + '</div>';
+  if (multi && recN.length) h += '<p class="muted" style="font-size:12.5px;margin:-6px 2px 0">Para o extrato pronto para copiar e o botão Recebi, deixe só uma pessoa marcada.</p>';
 
   if (!multi && info.reemb) {
     h += '<div class="grid">' + PF.panel('Extrato para enviar', 'Texto pronto para colar no WhatsApp ou e-mail. Gerado dos lançamentos acima.', '<textarea class="stmt" id="stmtTxt" readonly aria-label="Extrato pronto para copiar">' + esc(statement(M, who, m)) + '</textarea><div class="rb-acts" style="margin-top:10px"><button type="button" class="btn primary" data-act="copystmt">Copiar extrato</button>' + (PF.rbBtn ? PF.rbBtn(M, who, line ? line.saldo : 0) : '') + '</div>') + '</div>';
