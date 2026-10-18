@@ -1,5 +1,5 @@
 /* Finanças — service worker: guarda os arquivos do app no celular. Os dados vêm sempre da planilha (pela ponte). */
-const CACHE = 'financas-b29b386ad3';
+const CACHE = 'financas-9f8a72a365';
 const SHELL = ['./', './ponte.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 const LIBS = ['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'];
 

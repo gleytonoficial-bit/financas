@@ -918,7 +918,7 @@ PF.build = function (raw) {
     r.gIni = r.ini; r.gFim = r.fim;
     if (r.ini == null || !r.date) continue;
     const c = M.cardMap.get(r.card), kd = c ? PF.cardKind(c) : (/PIX|DEBITO|DINHEIRO|OUTROS/.test(PF.norm(r.card)) ? 'vista' : 'credito');
-    if (kd !== 'credito' && kd !== 'boleto') continue;
+    if (kd !== 'credito' && !(kd === 'boleto' && c && !/CONTAS/.test(PF.norm(c.tipo)))) continue;   // contas da casa (OUTROS) ficam no mês delas
     const g = PF.idxOf(r.date.getFullYear(), r.date.getMonth()) + (r.tipo === 'PARCELADO' ? Math.max(0, (r.parcAtual || 1) - 1) : 0);
     const d = Math.max(-3, Math.min(0, g - r.ini));
     if (d) { r.gIni = r.ini + d; r.gFim = r.fim >= 99999 ? r.fim : r.fim + d; }
