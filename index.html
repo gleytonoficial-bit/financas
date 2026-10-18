@@ -1340,7 +1340,9 @@ function alertsHtml(M, X, pend) {
 /* ---------- tabela de lançamentos (casal na Visão geral, negócios em Negócios) ---------- */
 const LF_KEYS = [['card', 'Cartão ou conta', r => r.card], ['resp', 'Quem', r => r.resp], ['cat', 'Categoria', r => r.cat], ['tipo', 'Tipo', r => r.tipo]];
 const tipoLab = t => t ? t.charAt(0) + t.slice(1).toLowerCase() : '';
-function ledBase(M) { const S = PF.S, pred = S.ledPred || (() => true); return PF.gasto(M, S.m).filter(pred); }
+/* "compra": compras feitas no mês escolhido. "fatura": tudo o que vence no mês seguinte (bate com Contas a pagar). */
+const ledFat = () => PF.S.ledBy === 'fatura';
+function ledBase(M) { const S = PF.S, pred = S.ledPred || (() => true); return (ledFat() ? PF.active(M, S.m + 1) : PF.gasto(M, S.m)).filter(pred); }
 /* busca: cada palavra digitada precisa ser o começo de uma palavra (MP acha "MP", não "Campelo") */
 function qMatch(q, r) {
   const words = PF.norm(q).split(' ').filter(Boolean); if (!words.length) return true;
@@ -1375,7 +1377,7 @@ function ledBody(M, rows) {
   let h = rows.slice(0, lim).map(r => {
     const d = r.date ? String(r.date.getDate()).padStart(2, '0') + '/' + String(r.date.getMonth() + 1).padStart(2, '0') : '—';
     const pend = r.pend && r.pend !== 'OK' ? ' <span class="pill warn">' + esc(r.pend) + '</span>' : '';
-    return '<tr><td class="nw muted num">' + d + '</td><td class="ds" title="' + esc(r.desc) + '">' + esc(r.desc) + pend + '</td><td class="nw"><i class="dot" style="background:' + PF.respColor(M, r.resp) + '"></i>' + esc(r.resp) + '</td><td class="nw">' + esc(r.card) + '</td><td class="nw">' + esc(r.cat) + '</td><td class="nw muted">' + esc(r.tipo.charAt(0) + r.tipo.slice(1).toLowerCase()) + '</td><td class="nw c num">' + esc(PF.parcelaTxt(r, m)) + '</td><td class="r">' + PF.money(r.val) + '</td><td class="nw">' + PF.rowLink(PF.GID.led, r.row, '') + '</td></tr>';
+    return '<tr><td class="nw muted num">' + d + '</td><td class="ds" title="' + esc(r.desc) + '">' + esc(r.desc) + pend + '</td><td class="nw"><i class="dot" style="background:' + PF.respColor(M, r.resp) + '"></i>' + esc(r.resp) + '</td><td class="nw">' + esc(r.card) + '</td><td class="nw">' + esc(r.cat) + '</td><td class="nw muted">' + esc(r.tipo.charAt(0) + r.tipo.slice(1).toLowerCase()) + '</td><td class="nw c num">' + esc(ledFat() ? PF.parcelaTxt(r, m + 1, 1) : PF.parcelaTxt(r, m)) + '</td><td class="r">' + PF.money(r.val) + '</td><td class="nw">' + PF.rowLink(PF.GID.led, r.row, '') + '</td></tr>';
   }).join('');
   if (rows.length > lim) h += '<tr><td colspan="9" class="c"><button type="button" class="btn sm" data-act="more">Mostrar mais ' + Math.min(60, rows.length - lim) + ' (restam ' + (rows.length - lim) + ')</button></td></tr>';
   return h;
@@ -1396,7 +1398,9 @@ function ledPanel(M, title) {
   const any = S.filter || (S.q || '').trim() || LF_KEYS.some(([k]) => fl[k]);
   const tools = '<div class="tools-row led-tools"><input type="search" id="ledQ" placeholder="Buscar descrição, pessoa, cartão…" value="' + esc(S.q) + '" aria-label="Buscar lançamentos">' + ledSelects(M) + fl0 + (any ? '<button type="button" class="btn sm" data-act="led-clear">Limpar filtros</button>' : '') + '</div>';
   const tbl = '<div class="scroll"><table class="t" id="ledTbl"><thead><tr>' + th('Data', 'date') + th('Descrição', 'desc') + th('Responsável', 'resp') + th('Cartão ou conta', 'card') + th('Categoria', 'cat') + th('Tipo', 'tipo') + '<th class="c">Parcela</th>' + th('Valor', 'val', 'r') + '<th></th></tr></thead><tbody id="ledBody">' + ledBody(M, rows) + '</tbody><tfoot id="ledFoot">' + ledFoot(rows) + '</tfoot></table></div>';
-  return PF.panel(title || 'Lançamentos do mês', 'Cada linha vem da aba LANÇAMENTOS. Filtre por cartão, pessoa, categoria ou tipo; clique no cabeçalho para ordenar.', tools + tbl, { id: 'ledPanel' });
+  const by = PF.seg('ledby', [['compra', 'Compras de ' + PF.lab(S.m)], ['fatura', 'Vence em ' + PF.lab(S.m + 1)]], ledFat() ? 'fatura' : 'compra');
+  const sub = ledFat() ? 'Tudo o que vence em ' + PF.lab(S.m + 1) + ' (faturas e contas): filtrando um cartão, o total bate com Contas a pagar.' : 'Compras feitas em ' + PF.lab(S.m) + '. Filtre por cartão, pessoa, categoria ou tipo; clique no cabeçalho para ordenar.';
+  return PF.panel(title || 'Lançamentos do mês', sub, tools + tbl, { id: 'ledPanel', right: by });
 }
 PF.ledPanel = ledPanel;
 
@@ -3472,12 +3476,12 @@ const TABS = { lancar: 'Lançar', contas: 'Contas a pagar', geral: 'Visão geral
 PF.M = null; PF.mode = 'loading'; PF.raw = {}; PF.errs = {}; PF.ts = {}; PF.mcp = null; PF.unsubs = [];
 
 /* ---------- memória leve (só conveniência) ---------- */
-function save() { try { localStorage.setItem('pf2026', JSON.stringify({ tab: S.tab, scope: S.scope, dim: S.dim, grpBy: S.grpBy, resps: S.resps })); } catch (e) { } }
+function save() { try { localStorage.setItem('pf2026', JSON.stringify({ tab: S.tab, scope: S.scope, dim: S.dim, grpBy: S.grpBy, resps: S.resps, ledBy: S.ledBy })); } catch (e) { } }
 function restore() {
   try {
     const o = JSON.parse(localStorage.getItem('pf2026') || '{}');
     if (o.tab && TABS[o.tab]) S.tab = o.tab;
-    if (o.scope) S.scope = o.scope; if (o.dim) S.dim = o.dim; if (o.grpBy) S.grpBy = o.grpBy; if (Array.isArray(o.resps)) S.resps = o.resps.filter(x => typeof x === 'string');
+    if (o.scope) S.scope = o.scope; if (o.dim) S.dim = o.dim; if (o.grpBy) S.grpBy = o.grpBy; if (o.ledBy === 'fatura') S.ledBy = 'fatura'; if (Array.isArray(o.resps)) S.resps = o.resps.filter(x => typeof x === 'string');
   } catch (e) { }
   const h = (location.hash || '').replace('#', '');
   if (TABS[h]) S.tab = h;
@@ -3693,6 +3697,7 @@ document.addEventListener('click', e => {
     case 'tab': go(v); break;
     case 'scope': S.scope = v; S.filter = null; S.limit = 60; save(); PF.render(); break;
     case 'grp': S.grpBy = v; S.filter = null; save(); PF.render(); break;
+    case 'ledby': S.ledBy = v; S.limit = 60; save(); PF.render(); break;
     case 'f-resp': case 'f-card': case 'f-grupo': case 'f-cat': {
       const k = a.slice(2); S.filter = (S.filter && S.filter.k === k && S.filter.v === v) ? null : { k, v }; S.limit = 60; PF.render();
       if (S.filter) { const el = $('ledPanel'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
