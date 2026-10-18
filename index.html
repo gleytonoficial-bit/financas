@@ -912,6 +912,17 @@ PF.build = function (raw) {
   M.cx = raw.cx ? parseCx(raw.cx) : [];
   M.respMap = new Map(M.cad.resp.map(r => [r.name, r]));
   M.cardMap = new Map(M.cad.cards.map(c => [c.name, c]));
+  /* mês do gasto (data da compra): a compra no cartão em outubro é gasto de outubro, mesmo que a fatura vença em novembro.
+     Parcelado: 1ª parcela no mês da compra. Contas e boletos de casa, Pix e débito ficam no mês em que estão. */
+  for (const r of M.led) {
+    r.gIni = r.ini; r.gFim = r.fim;
+    if (r.ini == null || !r.date) continue;
+    const c = M.cardMap.get(r.card), kd = c ? PF.cardKind(c) : (/PIX|DEBITO|DINHEIRO|OUTROS/.test(PF.norm(r.card)) ? 'vista' : 'credito');
+    if (kd !== 'credito' && kd !== 'boleto') continue;
+    const g = PF.idxOf(r.date.getFullYear(), r.date.getMonth()) + (r.tipo === 'PARCELADO' ? Math.max(0, (r.parcAtual || 1) - 1) : 0);
+    const d = Math.max(-3, Math.min(0, g - r.ini));
+    if (d) { r.gIni = r.ini + d; r.gFim = r.fim >= 99999 ? r.fim : r.fim + d; }
+  }
   M.catMap = new Map(M.cad.cats.map(c => [c.name, c]));
   // responsáveis que aparecem nos lançamentos mas não no cadastro
   const known = new Set(M.cad.resp.map(r => r.name));
@@ -930,7 +941,7 @@ PF.build = function (raw) {
   const firsts = (M.minIdx != null ? [M.minIdx] : []).concat(recIni);
   M.firstIdx = firsts.length ? firsts.reduce((a, b) => Math.min(a, b)) : null;   // primeiro mês com algum dado
   M.hasPag = M.pag.length > 0 || !!M.cap;
-  M._act = new Map(); M._met = new Map();
+  M._act = new Map(); M._gas = new Map(); M._met = new Map();
   return M;
 };
 
@@ -940,12 +951,18 @@ PF.active = function (M, m) {
   if (!a) { a = M.led.filter(r => r.ini != null && r.ini <= m && r.fim >= m); M._act.set(m, a); }
   return a;
 };
+/* gastos do mês pela data da compra (cards, lançamentos, pessoas, ano, negócios). Contas a pagar e saldo usam PF.active (vencimento). */
+PF.gasto = function (M, m) {
+  let a = M._gas.get(m);
+  if (!a) { a = M.led.filter(r => r.gIni != null && r.gIni <= m && r.gFim >= m); M._gas.set(m, a); }
+  return a;
+};
 PF.recAt = function (M, m, types, who) {
   return M.rec.filter(x => x.ini != null && x.ini <= m && x.fim >= m && (!types || types.indexOf(x.tipo) >= 0) && (!who || x.resp === who));
 };
 PF.metrics = function (M, m) {
   let X = M._met.get(m); if (X) return X;
-  const rows = PF.active(M, m), S = PF.sum;
+  const rows = PF.gasto(M, m), S = PF.sum;
   const by = cl => S(rows.filter(r => r.classe === cl));
   const pes = by('Pessoal'), fam = by('Família'), neg = by('Negócio'), tot = S(rows);
   const rec = S(PF.recAt(M, m, ['Renda pessoal', 'Outras receitas']), x => x.val);
@@ -968,8 +985,8 @@ PF.groupSum = function (rows, keyFn) {
   return [...mp.entries()].sort((a, b) => b[1] - a[1]);
 };
 PF.scopeRows = (rows, sc) => sc === 'Tudo' ? rows : rows.filter(r => r.classe === sc);
-PF.parcelaTxt = function (r, m) {
-  if (r.tipo === 'PARCELADO' && r.parcelas > 1) return Math.min(r.parcelas, (r.parcAtual || 1) + (m - r.ini)) + '/' + r.parcelas;
+PF.parcelaTxt = function (r, m, venc) {
+  if (r.tipo === 'PARCELADO' && r.parcelas > 1) return Math.min(r.parcelas, (r.parcAtual || 1) + (m - (venc || r.gIni == null ? r.ini : r.gIni))) + '/' + r.parcelas;
   if (r.fim >= 99999 || r.repete === 'Todo mês') return 'mensal';
   return 'à vista';
 };
@@ -1303,7 +1320,7 @@ function alertsHtml(M, X, pend) {
   const m = PF.S.m, A = [];
   if (X.n === 0) A.push({ t: 'warn', h: 'Sem gastos do casal em ' + PF.lab(m), s: 'Lance as compras do mês em LANÇAMENTOS ou escolha outro mês.' });
   if (X.rec === 0 && X.n > 0) A.push({ t: 'warn', h: 'Nenhuma receita em ' + PF.lab(m), s: 'Cadastre as rendas na aba RECEITAS para calcular o saldo e o % da renda.' });
-  if (X.rec > 0 && X.saldo < 0) A.push({ t: 'bad', h: 'Gastos de ' + PF.lab(m) + ' passam da renda em ' + PF.brl(-X.saldo), s: 'O custo do casal lançado no mês (' + PF.brl(X.pes) + ') é maior que as receitas do mês (' + PF.brl(X.rec) + '). Isso não é o saldo do banco: o saldo real está no topo da página.' });
+  if (X.rec > 0 && X.saldo < 0) A.push({ t: 'bad', h: 'Gastos de ' + PF.lab(m) + ' passam da renda em ' + PF.brl(-X.saldo), s: 'O que o casal gastou no mês (' + PF.brl(X.pes) + ') é maior que as receitas do mês (' + PF.brl(X.rec) + '). Isso não é o saldo do banco: o saldo real está no topo da página.' });
   if (X.pct != null && X.pct > 0.8 && X.saldo >= 0) A.push({ t: 'warn', h: 'Custo do casal em ' + PF.pct(X.pct, 0) + ' da renda', s: 'Sobra pouco para reserva. Vale revisar fixos e parcelas.' });
   if (M.hasPag) {
     const C = PF.contasMes(M, m), soon = C.items.filter(f => f.tone === 'bad' || f.tone === 'warn');
@@ -1323,7 +1340,7 @@ function alertsHtml(M, X, pend) {
 /* ---------- tabela de lançamentos (casal na Visão geral, negócios em Negócios) ---------- */
 const LF_KEYS = [['card', 'Cartão ou conta', r => r.card], ['resp', 'Quem', r => r.resp], ['cat', 'Categoria', r => r.cat], ['tipo', 'Tipo', r => r.tipo]];
 const tipoLab = t => t ? t.charAt(0) + t.slice(1).toLowerCase() : '';
-function ledBase(M) { const S = PF.S, pred = S.ledPred || (() => true); return PF.active(M, S.m).filter(pred); }
+function ledBase(M) { const S = PF.S, pred = S.ledPred || (() => true); return PF.gasto(M, S.m).filter(pred); }
 /* busca: cada palavra digitada precisa ser o começo de uma palavra (MP acha "MP", não "Campelo") */
 function qMatch(q, r) {
   const words = PF.norm(q).split(' ').filter(Boolean); if (!words.length) return true;
@@ -1448,7 +1465,7 @@ V.geral = function (M) {
   const y = PF.yOf(m), ytd = PF.range(Math.max(y * 12, M.minIdx == null ? y * 12 : M.minIdx), m).map(k => casalMx(M, k));
   const ytdPes = PF.sum(ytd, x => x.pes), nY = ytd.filter(x => x.n > 0).length;
   let h = (PF.saldoPanel ? PF.saldoPanel(M) : '') + '<div class="kpis"' + (PF.saldoPanel ? ' style="margin-top:14px"' : '') + '>' + [
-    PF.kpi({ lab: 'Resultado de ' + PF.lab(m), val: PF.money(X.saldo), tone: X.saldo < 0 ? 'neg' : 'pos', note: 'Receitas do mês menos o custo do casal lançado no mês. Não é o saldo do banco.', delta: dl(X.saldo, P.saldo, 'good'), spark: sp(x => x.saldo) }),
+    PF.kpi({ lab: 'Resultado de ' + PF.lab(m), val: PF.money(X.saldo), tone: X.saldo < 0 ? 'neg' : 'pos', note: 'Receitas do mês menos o que o casal gastou no mês (pela data da compra). Não é o saldo do banco.', delta: dl(X.saldo, P.saldo, 'good'), spark: sp(x => x.saldo) }),
     PF.kpi({ lab: 'Receitas do casal', val: PF.money(X.rec), note: (nRec ? nRec + (nRec === 1 ? ' salário' : ' salários') : (extraM ? '' : 'Nenhuma receita lançada')) + (extraM > 0.005 ? (nRec ? ' + ' : '') + PF.brl(extraM) + ' de renda extra' : ''), delta: dl(X.rec, P.rec, 'good'), spark: sp(x => x.rec) }),
     PF.kpi({ lab: 'Custo do casal', val: PF.money(X.pes), note: (X.pct != null ? PF.pct(X.pct) + ' da renda · ' : '') + X.n + ' lançamentos', delta: dl(X.pes, P.pes, 'bad'), spark: sp(x => x.pes) }),
     PF.kpi({ lab: 'Parcelado do casal', val: PF.money(X.parc), note: X.pes ? PF.pct(X.parc / X.pes, 0) + ' do custo do casal' : 'Sem gasto no mês', delta: dl(X.parc, P.parc, 'bad'), spark: sp(x => x.parc) }),
@@ -1478,7 +1495,7 @@ V.geral = function (M) {
 function heatData(M, y, dim) {
   const months = PF.range(y * 12, y * 12 + 11);
   const keyFn = { resp: r => r.resp, grupo: r => r.grupo, cat: r => r.cat, card: r => r.card }[dim] || (r => r.resp);
-  const per = months.map(k => { const mp = new Map(); for (const r of PF.active(M, k)) { const kk = keyFn(r) || '(sem informação)'; mp.set(kk, (mp.get(kk) || 0) + r.val); } return mp; });
+  const per = months.map(k => { const mp = new Map(); for (const r of PF.gasto(M, k)) { const kk = keyFn(r) || '(sem informação)'; mp.set(kk, (mp.get(kk) || 0) + r.val); } return mp; });
   const keys = new Map(); per.forEach(mp => mp.forEach((v, k) => keys.set(k, (keys.get(k) || 0) + v)));
   const order = [...keys.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0]);
   return {
@@ -1566,7 +1583,7 @@ PF.yearsOf = function (M) {
    PESSOAS
    ============================================================ */
 function statement(M, who, m) {
-  const rows = PF.active(M, m).filter(r => r.resp === who).sort((a, b) => (a.cat || '').localeCompare(b.cat || '', 'pt-BR') || b.val - a.val);
+  const rows = PF.gasto(M, m).filter(r => r.resp === who).sort((a, b) => (a.cat || '').localeCompare(b.cat || '', 'pt-BR') || b.val - a.val);
   const info = M.respMap.get(who) || {}, line = PF.receberLinha(M, who, m), L = [];
   L.push('EXTRATO ' + who + ' · ' + PF.labL(m)); L.push('');
   const by = new Map();
@@ -1595,7 +1612,7 @@ V.pessoas = function (M) {
   const multi = sel.length > 1, who = sel[0], inSel = r => sel.indexOf(r.resp) >= 0;
   const info = multi ? { classe: '', reemb: false } : (M.respMap.get(who) || { classe: '?', reemb: false });
   const label = multi ? (sel.length <= 3 ? sel.join(', ') : sel.length + ' pessoas') : who;
-  const rows = PF.active(M, m).filter(inSel), tot = PF.sum(rows);
+  const rows = PF.gasto(M, m).filter(inSel), tot = PF.sum(rows);
   const f = t => PF.sum(rows.filter(r => r.tipo === t));
   const col = multi ? T.accent : PF.respColor(M, who);
   const recN = sel.filter(n => (M.respMap.get(n) || {}).reemb);
@@ -1614,7 +1631,7 @@ V.pessoas = function (M) {
     '<p class="muted" style="font-size:12px">Toque nos nomes para marcar ou desmarcar: dá para juntar várias pessoas. ' + (multi ? '<button type="button" class="lnk" data-act="resp-set" data-v="' + esc(who) + '" style="color:var(--accent);font-size:12px">Ver só ' + esc(who) + '</button>' : '') + '</p></div>';
 
   const sh = X.tot ? tot / X.tot : null;
-  const prev = PF.sum(PF.active(M, m - 1).filter(inSel));
+  const prev = PF.sum(PF.gasto(M, m - 1).filter(inSel));
   const kp = [
     PF.kpi({ hero: 1, lab: (multi ? 'Gasto de ' + sel.length + ' pessoas' : 'Gasto de ' + who) + ' no mês', val: PF.money(tot), note: (sh != null ? PF.pct(sh, 0) + ' do gasto total' : '') + ' · ' + rows.length + ' lançamentos', delta: PF.delta(tot, prev, 'bad') }),
     PF.kpi({ lab: 'Fixo', val: PF.money(f('FIXO')), note: 'Repete todo mês' }),
@@ -1664,7 +1681,7 @@ V.pessoas = function (M) {
       const months = PF.range(PF.yOf(m) * 12, PF.yOf(m) * 12 + 11);
       const ds = sel.map(n => {
         const c = PF.respColor(M, n);
-        return { type: 'bar', label: n, data: months.map(k => PF.sum(PF.active(M, k).filter(r => r.resp === n))), backgroundColor: months.map(k => PF.alpha(c, PF.isProj(M, k) ? .3 : (k === m || multi ? .9 : .75))), borderRadius: 2, maxBarThickness: 34, stack: 'p' };
+        return { type: 'bar', label: n, data: months.map(k => PF.sum(PF.gasto(M, k).filter(r => r.resp === n))), backgroundColor: months.map(k => PF.alpha(c, PF.isProj(M, k) ? .3 : (k === m || multi ? .9 : .75))), borderRadius: 2, maxBarThickness: 34, stack: 'p' };
       });
       PF.mkChart('chPes', {
         data: { labels: months.map(k => PF.MES[PF.moOf(k)].replace('.', '')), datasets: ds },
@@ -1786,7 +1803,7 @@ V.parcelas = function (M) {
     { h: 'Descrição', f: p => '<span title="' + esc(p.r.desc) + '">' + esc(p.r.desc) + '</span>', cls: 'ds', sort: 'desc' },
     { h: 'Responsável', f: p => '<i class="dot" style="background:' + PF.respColor(M, p.r.resp) + '"></i>' + esc(p.r.resp), cls: 'nw', sort: 'resp' },
     { h: 'Cartão', f: p => esc(p.r.card), cls: 'nw', sort: 'card' },
-    { h: 'Parcela', f: p => esc(PF.parcelaTxt(p.r, m)), cls: 'c nw num' },
+    { h: 'Parcela', f: p => esc(PF.parcelaTxt(p.r, m, 1)), cls: 'c nw num' },
     { h: 'Valor', f: p => PF.money(p.r.val), cls: 'r', sort: 'val' },
     { h: 'Falta pagar', f: p => PF.money(p.falta), cls: 'r', sort: 'falta' },
     { h: 'Termina em', f: p => PF.lab(p.r.fim) + (p.resta === 0 ? ' <span class="pill good">última</span>' : ''), cls: 'nw', sort: 'fim' },
@@ -1865,7 +1882,7 @@ V.receber = function (M) {
    Receita bruta - gastos do mês = lucro líquido (o que sobra para você).
    ============================================================ */
 function dre(M, k, units) {
-  const rows = PF.active(M, k).filter(r => units.indexOf(r.resp) >= 0);
+  const rows = PF.gasto(M, k).filter(r => units.indexOf(r.resp) >= 0);
   const rec = PF.sum(PF.recAt(M, k, ['Receita do negócio']).filter(x => units.indexOf(x.resp) >= 0), x => x.val);
   const by = t => PF.sum(rows.filter(r => r.tipo === t)), cost = PF.sum(rows);
   return { rec, cost, parc: by('PARCELADO'), fix: by('FIXO'), vr: by('VARIÁVEL'), res: rec - cost, mg: rec > 0 ? (rec - cost) / rec : null };
@@ -1897,7 +1914,7 @@ V.negocios = function (M) {
     { h: 'Item', f: r => r.cls === 'ind' ? '<span style="padding-left:14px" class="muted">' + esc(r.k) + '</span>' : esc(r.k), cls: 'nw' },
     { h: 'Valor', f: r => PF.money(r.v), cls: 'r' }
   ], fr, { rowCls: r => r.cls === 'sub' ? 'sub' : '', foot: '<tr class="tot"><td>Lucro líquido (o que sobra)</td><td class="r">' + PF.money(D.res) + '</td></tr>' });
-  const cats = PF.groupSum(PF.active(M, m).filter(r => sel.indexOf(r.resp) >= 0), r => r.cat).map(([k, v]) => ({ key: k, label: k, value: v, color: /classificar/i.test(k) ? T.warn : T.cls['Negócio'] }));
+  const cats = PF.groupSum(PF.gasto(M, m).filter(r => sel.indexOf(r.resp) >= 0), r => r.cat).map(([k, v]) => ({ key: k, label: k, value: v, color: /classificar/i.test(k) ? T.warn : T.cls['Negócio'] }));
   h += '<div class="grid gw">' + PF.panel('Fechamento do mês', (S.unit === 'Todas' ? 'Todos os negócios' : S.unit) + ' · ' + PF.labC(m), fech, { hint: 'Compras parceladas ainda a pagar (incluindo este mês): ' + PF.brl(pending) + '.' }) +
     PF.panel('Gastos por categoria', (S.unit === 'Todas' ? 'Todos os negócios' : S.unit) + ' · ' + PF.lab(m), PF.bars(cats, { totalRow: 1 })) + '</div>';
 
@@ -1914,7 +1931,7 @@ V.negocios = function (M) {
     h += '<div class="grid">' + PF.panel('Comparativo entre os negócios', PF.labC(m), dtbl) + '</div>';
   }
 
-  const nrows = PF.active(M, m).filter(r => sel.indexOf(r.resp) >= 0);
+  const nrows = PF.gasto(M, m).filter(r => sel.indexOf(r.resp) >= 0);
   S.ledPred = r => sel.indexOf(r.resp) >= 0;
   h += '<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:26px"><div><h2 class="sec">Gastos dos negócios no mês</h2><p class="muted" style="font-size:12.5px;margin-top:2px">' + esc(PF.labC(m)) + ' · ' + nrows.length + ' lançamentos · ' + PF.brl(PF.sum(nrows)) + ' · ' + esc(S.unit === 'Todas' ? units.join(' e ') : S.unit) + '</p></div></div>';
   h += PF.detailBlocks(M, nrows, { whoTitle: 'Por negócio', color: T.cls['Negócio'] });
