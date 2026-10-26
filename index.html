@@ -954,7 +954,7 @@ PF.build = function (raw) {
   const firsts = (M.minIdx != null ? [M.minIdx] : []).concat(recIni);
   M.firstIdx = firsts.length ? firsts.reduce((a, b) => Math.min(a, b)) : null;   // primeiro mês com algum dado
   M.hasPag = M.pag.length > 0 || !!M.cap;
-  M._act = new Map(); M._gas = new Map(); M._met = new Map();
+  M._act = new Map(); M._gas = new Map(); M._cic = new Map(); M._met = new Map();
   return M;
 };
 
@@ -968,6 +968,14 @@ PF.active = function (M, m) {
 PF.gasto = function (M, m) {
   let a = M._gas.get(m);
   if (!a) { a = M.led.filter(r => r.gIni != null && r.gIni <= m && r.gFim >= m); M._gas.set(m, a); }
+  return a;
+};
+/* mês do app = o que o salário daquele mês paga: faturas e contas que vencem no mês seguinte + Pix, débito e dinheiro do próprio mês */
+PF.isVista = (M, r) => { const c = M.cardMap.get(r.card); return c ? PF.cardKind(c) === 'vista' : /PIX|DEBITO|DINHEIRO/.test(PF.norm(r.card)); };
+PF.ciclo = function (M, m) {
+  const k = 'c' + m; M._cic = M._cic || new Map();
+  let a = M._cic.get(k);
+  if (!a) { a = PF.active(M, m + 1).filter(r => !PF.isVista(M, r)).concat(PF.active(M, m).filter(r => PF.isVista(M, r))); M._cic.set(k, a); }
   return a;
 };
 PF.recAt = function (M, m, types, who) {
@@ -1355,7 +1363,7 @@ const LF_KEYS = [['card', 'Cartão ou conta', r => r.card], ['resp', 'Quem', r =
 const tipoLab = t => t ? t.charAt(0) + t.slice(1).toLowerCase() : '';
 /* "compra": compras feitas no mês escolhido. "fatura": tudo o que vence no mês seguinte (bate com Contas a pagar). */
 const ledFat = () => PF.S.ledBy === 'fatura';
-function ledBase(M) { const S = PF.S, pred = S.ledPred || (() => true); return (ledFat() ? PF.active(M, S.m + 1) : PF.gasto(M, S.m)).filter(pred); }
+function ledBase(M) { const S = PF.S, pred = S.ledPred || (() => true); return (S.tab === 'mes' ? PF.ciclo(M, S.m) : ledFat() ? PF.active(M, S.m + 1) : PF.gasto(M, S.m)).filter(pred); }
 /* busca: cada palavra digitada precisa ser o começo de uma palavra (MP acha "MP", não "Campelo") */
 function qMatch(q, r) {
   const words = PF.norm(q).split(' ').filter(Boolean); if (!words.length) return true;
@@ -1390,7 +1398,7 @@ function ledBody(M, rows) {
   let h = rows.slice(0, lim).map(r => {
     const d = r.date ? String(r.date.getDate()).padStart(2, '0') + '/' + String(r.date.getMonth() + 1).padStart(2, '0') : '—';
     const pend = r.pend && r.pend !== 'OK' ? ' <span class="pill warn">' + esc(r.pend) + '</span>' : '';
-    return '<tr><td class="nw muted num">' + d + '</td><td class="ds" title="' + esc(r.desc) + '">' + esc(r.desc) + pend + '<small class="mo-quem"><i class="dot" style="background:' + PF.respColor(M, r.resp) + '"></i>' + esc(r.resp) + ' · ' + esc(r.card) + '</small></td><td class="nw"><i class="dot" style="background:' + PF.respColor(M, r.resp) + '"></i>' + esc(r.resp) + '</td><td class="nw">' + esc(r.card) + '</td><td class="nw">' + esc(r.cat) + '</td><td class="nw muted">' + esc(r.tipo.charAt(0) + r.tipo.slice(1).toLowerCase()) + '</td><td class="nw c num">' + esc(ledFat() ? PF.parcelaTxt(r, m + 1, 1) : PF.parcelaTxt(r, m)) + '</td><td class="r">' + PF.money(r.val) + '</td><td class="nw">' + PF.rowLink(PF.GID.led, r.row, '') + '</td></tr>';
+    return '<tr><td class="nw muted num">' + d + '</td><td class="ds" title="' + esc(r.desc) + '">' + esc(r.desc) + pend + '<small class="mo-quem"><i class="dot" style="background:' + PF.respColor(M, r.resp) + '"></i>' + esc(r.resp) + ' · ' + esc(r.card) + '</small></td><td class="nw"><i class="dot" style="background:' + PF.respColor(M, r.resp) + '"></i>' + esc(r.resp) + '</td><td class="nw">' + esc(r.card) + '</td><td class="nw">' + esc(r.cat) + '</td><td class="nw muted">' + esc(r.tipo.charAt(0) + r.tipo.slice(1).toLowerCase()) + '</td><td class="nw c num">' + esc(PF.S.tab === 'mes' ? PF.parcelaTxt(r, PF.isVista(M, r) ? m : m + 1, 1) : ledFat() ? PF.parcelaTxt(r, m + 1, 1) : PF.parcelaTxt(r, m)) + '</td><td class="r">' + PF.money(r.val) + '</td><td class="nw">' + PF.rowLink(PF.GID.led, r.row, '') + '</td></tr>';
   }).join('');
   if (rows.length > lim) h += '<tr><td colspan="9" class="c"><button type="button" class="btn sm" data-act="more">Mostrar mais ' + Math.min(60, rows.length - lim) + ' (restam ' + (rows.length - lim) + ')</button></td></tr>';
   return h;
@@ -1415,7 +1423,7 @@ function ledPanel(M, title, o) {
   const tbl = '<div class="scroll"><table class="t" id="ledTbl"><thead><tr>' + th('Data', 'date') + th('Descrição', 'desc') + th('Responsável', 'resp') + th('Cartão ou conta', 'card') + th('Categoria', 'cat') + th('Tipo', 'tipo') + '<th class="c">Parcela</th>' + th('Valor', 'val', 'r') + '<th></th></tr></thead><tbody id="ledBody">' + ledBody(M, rows) + '</tbody><tfoot id="ledFoot">' + ledFoot(rows) + '</tfoot></table></div>';
   const by = PF.seg('ledby', [['compra', 'Compras de ' + PF.lab(S.m)], ['fatura', 'Vence em ' + PF.lab(S.m + 1)]], ledFat() ? 'fatura' : 'compra');
   const sub = ledFat() ? 'Tudo o que vence em ' + PF.lab(S.m + 1) + ' (faturas e contas): filtrando um cartão, o total bate com Contas a pagar.' : 'Compras feitas em ' + PF.lab(S.m) + '. Filtre por cartão, pessoa, categoria ou tipo; clique no cabeçalho para ordenar.';
-  if (o.noBy) return PF.panel(title || 'Lançamentos do mês', 'Compras feitas em ' + PF.lab(S.m) + ' (as parcelas contam uma por mês). O total embaixo é a soma exata das linhas que aparecem.', tools + tbl, { id: 'ledPanel' });
+  if (o.noBy) return PF.panel(title || 'Lançamentos do mês', 'As faturas que vencem em ' + PF.lab(S.m + 1) + ' (com todas as compras de cada uma), as contas que vencem em ' + PF.lab(S.m + 1) + ' e o Pix e débito de ' + PF.lab(S.m) + '. O total embaixo é a soma exata das linhas que aparecem.', tools + tbl, { id: 'ledPanel' });
   return PF.panel(title || 'Lançamentos do mês', sub, tools + tbl, { id: 'ledPanel', right: by });
 }
 PF.ledPanel = ledPanel;
@@ -2385,7 +2393,7 @@ const DO_CASAL = r => r.classe === 'Pessoal';
 V.mes = function (M) {
   const S = PF.S, m = S.m, T = PF.T;
   S.ledPred = null;
-  const rows = PF.gasto(M, m), cas = rows.filter(DO_CASAL), outros = rows.filter(r => !DO_CASAL(r));
+  const rows = PF.ciclo(M, m), cas = rows.filter(DO_CASAL), outros = rows.filter(r => !DO_CASAL(r));
   const recs = PF.recAt(M, m, ['Renda pessoal', 'Outras receitas']);
   const entrou = PF.sum(recs, x => x.val), gastou = PF.sum(cas), sobrou = entrou - gastou, tot = PF.sum(rows);
   const quem = [...new Set(cas.map(r => r.resp))].sort((a, b) => a.localeCompare(b, 'pt-BR')).join(' + ') || 'vocês';
@@ -2393,7 +2401,7 @@ V.mes = function (M) {
     PF.kpi({ lab: 'Entrou', val: PF.money(entrou), note: recs.length + (recs.length === 1 ? ' receita' : ' receitas') + ', listadas no fim da página' }) +
     PF.kpi({ lab: 'Gastos de vocês', val: PF.money(gastou), note: 'Soma de ' + esc(quem) + ' na lista abaixo' }) +
     PF.kpi({ lab: 'Sobrou', val: PF.money(sobrou), tone: sobrou < 0 ? 'neg' : 'pos', note: 'Entrou menos os gastos de vocês' }) + '</div>';
-  if (outros.length) h += '<p class="mes-nota">Família e negócios gastaram <b>' + PF.money(PF.sum(outros)) + '</b> nos cartões de vocês em ' + PF.lab(m) + '. Aparece na lista e no total por pessoa, mas fica fora do "Sobrou" porque eles devolvem.</p>';
+  if (outros.length) h += '<p class="mes-nota">Família e negócios gastaram <b>' + PF.money(PF.sum(outros)) + '</b> nos cartões de vocês nessas faturas. Aparece na lista e no total por pessoa, mas fica fora do "Sobrou" porque eles devolvem.</p>';
   const item = (k, v, col) => ({ key: k, label: k, value: v, color: col });
   const pessoa = PF.groupSum(rows, r => r.resp).map(([k, v]) => item(k, v, PF.respColor(M, k)));
   const cartao = PF.groupSum(rows, r => r.card).map(([k, v]) => item(k, v, T.accent));
@@ -2410,7 +2418,7 @@ V.mes = function (M) {
   ], recs.slice().sort((a, b) => b.val - a.val), { foot: '<tr class="tot"><td colspan="2">Total que entrou</td><td class="mh"></td><td class="r">' + PF.money(entrou) + '</td></tr>' })
     : PF.empty('Nenhuma receita', 'Nada lançado em RECEITAS para ' + PF.lab(m) + '.');
   h += '<div class="grid">' + PF.panel('O que entrou em ' + PF.lab(m), 'Salários e rendas extras da aba RECEITAS.', recTbl) + '</div>';
-  return { title: 'Mês', sub: PF.labC(m), html: h };
+  return { title: 'Mês', sub: PF.labC(m) + ' · o que vocês pagam no começo de ' + PF.MESL[PF.moOf(m + 1)], html: h };
 };
 
 /* ============================================================
