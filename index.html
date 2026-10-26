@@ -132,6 +132,21 @@ h1,h2,h3,p{margin:0}
 .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .gw{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
 .gn{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr)}
+.kpis.k3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mes-nota{font-size:12.5px;color:var(--ink-3);margin:10px 2px 0;line-height:1.45}
+.fat-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+details.fat{padding:0}
+details.fat>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px}
+details.fat>summary::-webkit-details-marker{display:none}
+details.fat>summary .fn{display:flex;flex-direction:column;gap:3px;min-width:0}
+details.fat>summary .fn b{font:600 15px/1.2 var(--f-display)}
+details.fat>summary .fn small{font-size:12px;color:var(--ink-3)}
+details.fat>summary .fv{display:flex;align-items:center;gap:10px;font:600 17px/1 var(--f-display);font-variant-numeric:tabular-nums;white-space:nowrap}
+details.fat>summary .fv::after{content:'';width:7px;height:7px;border-right:1.8px solid var(--ink-3);border-bottom:1.8px solid var(--ink-3);transform:rotate(45deg);margin:-4px 2px 0 4px;transition:transform .15s}
+details.fat[open]>summary .fv::after{transform:rotate(-135deg);margin-top:4px}
+details.fat>.scroll{padding:0 18px 14px}
+.fat-tot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}
+.fat-tot b{font:600 19px/1 var(--f-display);font-variant-numeric:tabular-nums}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px 14px;min-width:0}
 .panel>header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px 14px;flex-wrap:wrap;margin-bottom:12px}
 .panel h2{font:600 15px/1.25 var(--f-display);letter-spacing:-.005em}
@@ -257,6 +272,11 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
 
 /* ---------- responsive ---------- */
 @media (max-width:1180px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mo-quem{display:none}
+.mesbars .rw{grid-template-columns:minmax(0,1fr) auto auto}
+.mesbars .rw .track{grid-column:1 / -1;order:5}
+.mesbars .rw .sp{display:none}
+@media (max-width:640px){.kpis.k3{grid-template-columns:minmax(0,1fr)}.mh{display:none}#ledTbl th:nth-child(n+4):nth-child(-n+7),#ledTbl td:nth-child(n+4):nth-child(-n+7),#ledTbl th:nth-child(9),#ledTbl td:nth-child(9),#ledTbl th:nth-child(3),#ledTbl td:nth-child(3){display:none}.mo-quem{display:block;margin-top:2px;font-size:11.5px;color:var(--ink-3)}#ledTbl td.ds{white-space:normal;max-width:none}#ledTbl tfoot td{white-space:normal}}
 @media (max-width:980px){
   .g2,.g3,.gw,.gn{grid-template-columns:minmax(0,1fr)}
   .app{display:block}
@@ -530,15 +550,8 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
     </div>
     <nav class="nav" id="nav" aria-label="Seções do painel">
       <button type="button" class="nav-add" data-tab="lancar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Lançar</span><em class="badge cxb" id="cxBadge" hidden></em></button>
-      <button type="button" data-tab="contas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5"/><path d="M9 16.5l2 2 4-4"/></svg><span>Contas a pagar</span></button>
-      <button type="button" data-tab="geral"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Visão geral</span></button>
-      <button type="button" data-tab="ano"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Ano</span></button>
-      <button type="button" data-tab="pessoas"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M17 14.2c2.3 0 4 1.8 4 4.3"/></svg><span>Pessoas</span></button>
-      <button type="button" data-tab="cartoes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M2.5 10h19M6 15h4"/></svg><span>Cartões e faturas</span></button>
-      <button type="button" data-tab="parcelas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 4.5-9 4.5-9-4.5z"/><path d="M3 12l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/></svg><span>Parcelas</span></button>
-      <button type="button" data-tab="receber"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>A receber</span></button>
-      <button type="button" data-tab="negocios"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M3 13h18"/></svg><span>Negócios</span></button>
-      <button type="button" data-tab="pendencias"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg><span>Pendências</span><em class="badge" id="pendBadge" hidden></em></button>
+      <button type="button" data-tab="mes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M7.5 14h4M7.5 17h7"/></svg><span>Mês</span></button>
+      <button type="button" data-tab="faturas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M2.5 10h19M6 15h4"/></svg><span>Faturas</span></button>
     </nav>
     <div class="rail-foot">
       <div class="live" id="live" data-s="loading"><i class="led"></i><span id="liveTxt">Conectando…</span></div>
@@ -1300,7 +1313,7 @@ PF.rowLink = (gid, row, label) => '<a href="' + PF.SHEET_URL + '#gid=' + gid + '
 (function () {
 'use strict';
 const PF = window.PF, esc = PF.esc, V = PF.V = PF.V || {};
-PF.S = { tab: 'geral', m: null, scope: 'Tudo', dim: 'resp', grpBy: 'grupo', filter: null, sort: {}, q: '', limit: 60, resps: null, unit: 'Todas', parcScope: 'Pessoal', pendType: 'Todas' };
+PF.S = { tab: 'mes', m: null, scope: 'Tudo', dim: 'resp', grpBy: 'grupo', filter: null, sort: {}, q: '', limit: 60, resps: null, unit: 'Todas', parcScope: 'Pessoal', pendType: 'Todas' };
 
 const NATURE = () => [
   { key: 'FIXO', label: 'Fixo', color: PF.T.ink2 },
@@ -1377,13 +1390,13 @@ function ledBody(M, rows) {
   let h = rows.slice(0, lim).map(r => {
     const d = r.date ? String(r.date.getDate()).padStart(2, '0') + '/' + String(r.date.getMonth() + 1).padStart(2, '0') : '—';
     const pend = r.pend && r.pend !== 'OK' ? ' <span class="pill warn">' + esc(r.pend) + '</span>' : '';
-    return '<tr><td class="nw muted num">' + d + '</td><td class="ds" title="' + esc(r.desc) + '">' + esc(r.desc) + pend + '</td><td class="nw"><i class="dot" style="background:' + PF.respColor(M, r.resp) + '"></i>' + esc(r.resp) + '</td><td class="nw">' + esc(r.card) + '</td><td class="nw">' + esc(r.cat) + '</td><td class="nw muted">' + esc(r.tipo.charAt(0) + r.tipo.slice(1).toLowerCase()) + '</td><td class="nw c num">' + esc(ledFat() ? PF.parcelaTxt(r, m + 1, 1) : PF.parcelaTxt(r, m)) + '</td><td class="r">' + PF.money(r.val) + '</td><td class="nw">' + PF.rowLink(PF.GID.led, r.row, '') + '</td></tr>';
+    return '<tr><td class="nw muted num">' + d + '</td><td class="ds" title="' + esc(r.desc) + '">' + esc(r.desc) + pend + '<small class="mo-quem"><i class="dot" style="background:' + PF.respColor(M, r.resp) + '"></i>' + esc(r.resp) + ' · ' + esc(r.card) + '</small></td><td class="nw"><i class="dot" style="background:' + PF.respColor(M, r.resp) + '"></i>' + esc(r.resp) + '</td><td class="nw">' + esc(r.card) + '</td><td class="nw">' + esc(r.cat) + '</td><td class="nw muted">' + esc(r.tipo.charAt(0) + r.tipo.slice(1).toLowerCase()) + '</td><td class="nw c num">' + esc(ledFat() ? PF.parcelaTxt(r, m + 1, 1) : PF.parcelaTxt(r, m)) + '</td><td class="r">' + PF.money(r.val) + '</td><td class="nw">' + PF.rowLink(PF.GID.led, r.row, '') + '</td></tr>';
   }).join('');
   if (rows.length > lim) h += '<tr><td colspan="9" class="c"><button type="button" class="btn sm" data-act="more">Mostrar mais ' + Math.min(60, rows.length - lim) + ' (restam ' + (rows.length - lim) + ')</button></td></tr>';
   return h;
 }
 function ledFoot(rows) {
-  return '<tr class="tot"><td colspan="7">Total (' + rows.length + (rows.length === 1 ? ' lançamento' : ' lançamentos') + ')</td><td class="r">' + PF.money(PF.sum(rows)) + '</td><td></td></tr>';
+  return '<tr class="tot"><td></td><td>Total (' + rows.length + (rows.length === 1 ? ' lançamento' : ' lançamentos') + ')</td><td></td><td></td><td></td><td></td><td></td><td class="r">' + PF.money(PF.sum(rows)) + '</td><td></td></tr>';
 }
 PF.refreshLed = function () {
   const M = PF.M, b = document.getElementById('ledBody'), f = document.getElementById('ledFoot');
@@ -1391,7 +1404,9 @@ PF.refreshLed = function () {
   const rows = ledFiltered(M);
   b.innerHTML = ledBody(M, rows); f.innerHTML = ledFoot(rows);
 };
-function ledPanel(M, title) {
+function ledPanel(M, title, o) {
+  o = o || {};
+  if (o.noBy) PF.S.ledBy = 'compra';
   const S = PF.S, rows = ledFiltered(M), st = S.sort.led || { k: 'val', d: -1 }, fl = S.lf || {};
   const th = (h, k, cls) => '<th class="' + (cls || '') + '" data-act="sort" data-t="led" data-v="' + k + '">' + h + (st.k === k ? (st.d > 0 ? ' ↑' : ' ↓') : '') + '</th>';
   const fl0 = S.filter ? '<span class="chip" style="cursor:default">Filtro: ' + esc(S.filter.v) + ' <button type="button" data-act="clearf" aria-label="Limpar filtro" style="margin-left:4px;font-size:14px;line-height:1">×</button></span>' : '';
@@ -1400,6 +1415,7 @@ function ledPanel(M, title) {
   const tbl = '<div class="scroll"><table class="t" id="ledTbl"><thead><tr>' + th('Data', 'date') + th('Descrição', 'desc') + th('Responsável', 'resp') + th('Cartão ou conta', 'card') + th('Categoria', 'cat') + th('Tipo', 'tipo') + '<th class="c">Parcela</th>' + th('Valor', 'val', 'r') + '<th></th></tr></thead><tbody id="ledBody">' + ledBody(M, rows) + '</tbody><tfoot id="ledFoot">' + ledFoot(rows) + '</tfoot></table></div>';
   const by = PF.seg('ledby', [['compra', 'Compras de ' + PF.lab(S.m)], ['fatura', 'Vence em ' + PF.lab(S.m + 1)]], ledFat() ? 'fatura' : 'compra');
   const sub = ledFat() ? 'Tudo o que vence em ' + PF.lab(S.m + 1) + ' (faturas e contas): filtrando um cartão, o total bate com Contas a pagar.' : 'Compras feitas em ' + PF.lab(S.m) + '. Filtre por cartão, pessoa, categoria ou tipo; clique no cabeçalho para ordenar.';
+  if (o.noBy) return PF.panel(title || 'Lançamentos do mês', 'Compras feitas em ' + PF.lab(S.m) + ' (as parcelas contam uma por mês). O total embaixo é a soma exata das linhas que aparecem.', tools + tbl, { id: 'ledPanel' });
   return PF.panel(title || 'Lançamentos do mês', sub, tools + tbl, { id: 'ledPanel', right: by });
 }
 PF.ledPanel = ledPanel;
@@ -2361,6 +2377,65 @@ async function cxSkip(row, rows) {
 }
 
 let focusKeep = null;
+
+/* ============================================================
+   MÊS (tela simples): entrou, gastos de vocês, sobrou e a lista conferível
+   ============================================================ */
+const DO_CASAL = r => r.classe === 'Pessoal';
+V.mes = function (M) {
+  const S = PF.S, m = S.m, T = PF.T;
+  S.ledPred = null;
+  const rows = PF.gasto(M, m), cas = rows.filter(DO_CASAL), outros = rows.filter(r => !DO_CASAL(r));
+  const recs = PF.recAt(M, m, ['Renda pessoal', 'Outras receitas']);
+  const entrou = PF.sum(recs, x => x.val), gastou = PF.sum(cas), sobrou = entrou - gastou, tot = PF.sum(rows);
+  const quem = [...new Set(cas.map(r => r.resp))].sort((a, b) => a.localeCompare(b, 'pt-BR')).join(' + ') || 'vocês';
+  let h = '<div class="kpis k3">' +
+    PF.kpi({ lab: 'Entrou', val: PF.money(entrou), note: recs.length + (recs.length === 1 ? ' receita' : ' receitas') + ', listadas no fim da página' }) +
+    PF.kpi({ lab: 'Gastos de vocês', val: PF.money(gastou), note: 'Soma de ' + esc(quem) + ' na lista abaixo' }) +
+    PF.kpi({ lab: 'Sobrou', val: PF.money(sobrou), tone: sobrou < 0 ? 'neg' : 'pos', note: 'Entrou menos os gastos de vocês' }) + '</div>';
+  if (outros.length) h += '<p class="mes-nota">Família e negócios gastaram <b>' + PF.money(PF.sum(outros)) + '</b> nos cartões de vocês em ' + PF.lab(m) + '. Aparece na lista e no total por pessoa, mas fica fora do "Sobrou" porque eles devolvem.</p>';
+  const item = (k, v, col) => ({ key: k, label: k, value: v, color: col });
+  const pessoa = PF.groupSum(rows, r => r.resp).map(([k, v]) => item(k, v, PF.respColor(M, k)));
+  const cartao = PF.groupSum(rows, r => r.card).map(([k, v]) => item(k, v, T.accent));
+  const cat = PF.groupSum(rows, r => r.cat).map(([k, v]) => item(k, v, /classificar/i.test(k) ? T.warn : T.accent));
+  const tip = 'Toque numa linha para filtrar a lista.';
+  h += '<div class="grid g3 mesbars">' +
+    PF.panel('Por pessoa', tip, PF.bars(pessoa, { total: tot, act: 'f-resp', totalRow: 1 })) +
+    PF.panel('Por cartão ou conta', tip, PF.bars(cartao, { total: tot, act: 'f-card', totalRow: 1 })) +
+    PF.panel('Por categoria', tip, PF.bars(cat, { total: tot, act: 'f-cat', totalRow: 1 })) + '</div>';
+  h += '<div class="grid">' + PF.ledPanel(M, 'Lançamentos de ' + PF.lab(m), { noBy: 1 }) + '</div>';
+  const recTbl = recs.length ? PF.tbl([
+    { h: 'Receita', f: x => esc(x.desc), cls: 'ds' }, { h: 'Quem', f: x => esc(x.resp), cls: 'nw' }, { h: 'Tipo', f: x => esc(x.tipo), cls: 'nw muted mh' },
+    { h: 'Valor', f: x => PF.money(x.val), cls: 'r' }
+  ], recs.slice().sort((a, b) => b.val - a.val), { foot: '<tr class="tot"><td colspan="2">Total que entrou</td><td class="mh"></td><td class="r">' + PF.money(entrou) + '</td></tr>' })
+    : PF.empty('Nenhuma receita', 'Nada lançado em RECEITAS para ' + PF.lab(m) + '.');
+  h += '<div class="grid">' + PF.panel('O que entrou em ' + PF.lab(m), 'Salários e rendas extras da aba RECEITAS.', recTbl) + '</div>';
+  return { title: 'Mês', sub: PF.labC(m), html: h };
+};
+
+/* ============================================================
+   FATURAS: o que vence no mês seguinte, cartão por cartão, com as compras de cada um
+   ============================================================ */
+V.faturas = function (M) {
+  const S = PF.S, m = S.m, k = m + 1, C = PF.contasMes(M, k), rowsK = PF.active(M, k);
+  const dd = d => String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+  let h = '<p class="mes-nota" style="margin-top:0">O que vocês pagam no começo de ' + PF.MESL[PF.moOf(k)] + ': a fatura inteira de cada cartão (cada um fecha num dia) e as contas da casa que vencem em ' + PF.lab(k) + '. Toque num cartão para ver as compras e conferir com o app do banco.</p>';
+  h += '<div class="fat-list">' + C.items.map(it => {
+    const rs = rowsK.filter(r => r.card === it.name).sort((a, b) => ((a.date ? +a.date : 0) - (b.date ? +b.date : 0)) || a.row - b.row);
+    const outros = it.fam + it.neg;
+    const info = [/VARIA/i.test(it.titular || '') ? 'contas da casa' : esc(it.titular || ''), it.due ? 'vence ' + dd(it.due) : 'vários vencimentos', rs.length + (rs.length === 1 ? ' lançamento' : ' lançamentos')].filter(Boolean).join(' · ') +
+      (outros > 0.005 ? ' · inclui ' + PF.brl(outros) + ' de família e negócios' : '') + (it.falta <= 0.005 ? ' · <span class="pill good">Paga</span>' : '');
+    const tbl = PF.tbl([
+      { h: 'Data', f: r => r.date ? dd(r.date) : '—', cls: 'nw muted num' }, { h: 'Descrição', f: r => esc(r.desc), cls: 'ds' }, { h: 'Quem', f: r => esc(r.resp), cls: 'nw mh' },
+      { h: 'Parcela', f: r => esc(PF.parcelaTxt(r, k, 1)), cls: 'c nw num' }, { h: 'Valor', f: r => PF.money(r.val), cls: 'r' }, { h: '', f: r => PF.rowLink(PF.GID.led, r.row, ''), cls: 'nw mh' }
+    ], rs, { foot: '<tr class="tot"><td colspan="2">Total da fatura</td><td class="mh"></td><td></td><td class="r">' + PF.money(it.val) + '</td><td class="mh"></td></tr>' });
+    return '<details class="panel fat"><summary><span class="fn"><b>' + esc(it.name) + '</b><small>' + info + '</small></span><span class="fv">' + PF.money(it.val) + '</span></summary>' + tbl + '</details>';
+  }).join('') + '</div>';
+  if (!C.items.length) h += '<div class="panel">' + PF.empty('Nada vencendo em ' + PF.lab(k), 'Nenhuma fatura ou conta lançada para esse mês.') + '</div>';
+  else h += '<div class="panel fat-tot"><span>Total que vence em ' + PF.lab(k) + '</span><b>' + PF.money(C.tot) + '</b></div>';
+  return { title: 'Faturas', sub: 'Compras de ' + PF.lab(m) + ' · vencem em ' + PF.MESL[PF.moOf(k)] + ' de ' + PF.yOf(k), html: h };
+};
+
 V.lancar = function (M) {
   const ae = document.activeElement;
   focusKeep = ae && ae.id && /^(lf|lc|lx)-/.test(ae.id) ? { id: ae.id, s: ae.selectionStart, e: ae.selectionEnd } : null;
@@ -3472,7 +3547,9 @@ PF.demoRaw = function () {
 'use strict';
 const PF = window.PF, S = PF.S, esc = PF.esc, V = PF.V;
 const $ = id => document.getElementById(id);
-const TABS = { lancar: 'Lançar', contas: 'Contas a pagar', geral: 'Visão geral', ano: 'Ano', pessoas: 'Pessoas', cartoes: 'Cartões e faturas', parcelas: 'Parcelas', receber: 'A receber', negocios: 'Negócios', pendencias: 'Pendências' };
+const TABS = { lancar: 'Lançar', mes: 'Mês', faturas: 'Faturas' };
+/* telas antigas (endereços salvos ou links internos) caem na tela simples mais parecida */
+const OLD_TAB = { contas: 'faturas', cartoes: 'faturas', geral: 'mes', ano: 'mes', pessoas: 'mes', parcelas: 'mes', receber: 'mes', negocios: 'mes', pendencias: 'mes' };
 PF.M = null; PF.mode = 'loading'; PF.raw = {}; PF.errs = {}; PF.ts = {}; PF.mcp = null; PF.unsubs = [];
 
 /* ---------- memória leve (só conveniência) ---------- */
@@ -3480,11 +3557,11 @@ function save() { try { localStorage.setItem('pf2026', JSON.stringify({ tab: S.t
 function restore() {
   try {
     const o = JSON.parse(localStorage.getItem('pf2026') || '{}');
-    if (o.tab && TABS[o.tab]) S.tab = o.tab;
+    if (o.tab) S.tab = TABS[o.tab] ? o.tab : (OLD_TAB[o.tab] || 'mes');
     if (o.scope) S.scope = o.scope; if (o.dim) S.dim = o.dim; if (o.grpBy) S.grpBy = o.grpBy; if (o.ledBy === 'fatura') S.ledBy = 'fatura'; if (Array.isArray(o.resps)) S.resps = o.resps.filter(x => typeof x === 'string');
   } catch (e) { }
   const h = (location.hash || '').replace('#', '');
-  if (TABS[h]) S.tab = h;
+  if (TABS[h]) S.tab = h; else if (OLD_TAB[h]) S.tab = OLD_TAB[h];
 }
 
 /* ---------- intervalo de meses ---------- */
@@ -3573,14 +3650,14 @@ PF.render = function (o) {
     view.innerHTML = PF.mode === 'error' ? '<div class="panel">' + PF.empty('Os números ainda não chegaram', 'Resolva o aviso acima para ler a planilha, ou veja a página com dados de exemplo.') + '</div>' : skeleton();
     $('vTitle').textContent = TABS[S.tab] || ''; $('vSub').innerHTML = '&nbsp;'; return;
   }
-  const fn = V[S.tab] || V.geral;
+  const fn = V[S.tab] || V.mes;
   let out;
   try { out = fn(PF.M); } catch (e) {
     console.error(e);
     out = { title: TABS[S.tab], sub: '', html: '<div class="panel">' + PF.empty('Não foi possível montar esta tela', esc(String(e && e.message || e))) + '</div>' };
   }
   const y = window.scrollY;
-  view.innerHTML = finBanner() + cxBar() + out.html;
+  view.innerHTML = out.html;
   $('vTitle').textContent = out.title; $('vSub').textContent = (PF.mode === 'demo' ? 'EXEMPLO · ' : '') + (out.sub || '');
   fillMonthSelect(); updateBadge(); updateFoot();
   if (out.after) { try { out.after(); } catch (e) { console.error(e); } }
@@ -3685,6 +3762,7 @@ PF.refreshLive = function () {
 
 /* ---------- navegação e eventos ---------- */
 function go(tab) {
+  if (!TABS[tab]) tab = OLD_TAB[tab] || 'mes';
   S.tab = tab; S.filter = null; S.lf = {}; S.q = ''; save();
   try { history.replaceState(null, '', '#' + tab); } catch (e) { }
   PF.render({ top: true });
@@ -3723,7 +3801,7 @@ document.addEventListener('click', e => {
     case 'ptype': S.pendType = v; PF.render(); break;
     case 'statement': S.resps = [v]; save(); go('pessoas'); break;
     case 'copystmt': { const ta = $('stmtTxt'); if (ta) PF.copyText(ta.value, ta); break; }
-    case 'goto': S.tab = 'geral'; save(); PF.setMonth(+v); window.scrollTo(0, 0); break;
+    case 'goto': S.tab = 'mes'; save(); PF.setMonth(+v); window.scrollTo(0, 0); break;
     case 'demo': startDemo('Os números reais aparecem quando a planilha conectar.'); break;
     case 'retry': banner('', ''); connect(); break;
     case 'approve': {
