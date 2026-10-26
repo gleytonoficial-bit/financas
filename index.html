@@ -17,7 +17,7 @@
 <meta name="apple-mobile-web-app-title" content="Finanças">
 <meta name="application-name" content="Finanças">
 <meta name="format-detection" content="telephone=no">
-<style>:root{color-scheme:light;box-sizing:border-box}@media (min-width:981px){:root{padding-top:env(safe-area-inset-top,0px)}}html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--brand,#15392b)}body{margin:0;padding:0 0 env(safe-area-inset-bottom,0px);min-height:100vh;min-height:100dvh;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<style>:root{color-scheme:light;box-sizing:border-box}@media (min-width:981px){:root{padding-top:env(safe-area-inset-top,0px)}}@media (max-width:980px){html:root{--sat:env(safe-area-inset-top,0px)}}html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--brand,#15392b)}body{margin:0;padding:0 0 env(safe-area-inset-bottom,0px);min-height:100vh;min-height:100dvh;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <script src="ponte.js"></script>
 </head>
 <body>
@@ -553,7 +553,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}
 /* =====================================================================
    Finanças v2 — visual de app: faixa verde no topo, cartões claros, extrato, barra de abas
    ===================================================================== */
-:root{--gl:max(16px,env(safe-area-inset-left,0px));--gr:max(16px,env(safe-area-inset-right,0px));--tabh:64px}
+:root{--gl:max(16px,env(safe-area-inset-left,0px));--gr:max(16px,env(safe-area-inset-right,0px));--tabh:64px;--sat:0px}
 body{font:400 14.5px/1.5 var(--f-body);letter-spacing:-.003em}
 .num,.tx-v,.h-val,.big{font-variant-numeric:tabular-nums lining-nums}
 :where(button,select,input,a,summary,[tabindex]):focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:10px}
@@ -747,7 +747,12 @@ details.fat[open]>summary{border-bottom:1px solid var(--line-2)}
 @media (max-width:980px){
   .rail{display:none}
   .main{padding-left:var(--gl);padding-right:var(--gr);padding-block:0 calc(var(--tabh) + 36px + env(safe-area-inset-bottom,0px));max-width:none}
-  .top{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"ttl act" "mnav mnav";gap:16px 12px;align-items:center;margin-left:calc(-1 * var(--gl));margin-right:calc(-1 * var(--gr));padding:calc(16px + env(safe-area-inset-top,0px)) var(--gr) 20px var(--gl);background:var(--brand);color:var(--brand-ink);border-radius:0 0 28px 28px;backdrop-filter:none}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:var(--sat);background:var(--brand);z-index:60;pointer-events:none}
+  .top{position:static!important;top:auto!important;z-index:auto;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"ttl act" "mnav mnav";gap:14px 12px;align-items:center;margin-left:calc(-1 * var(--gl));margin-right:calc(-1 * var(--gr));padding:calc(var(--sat) + 14px) var(--gr) 18px var(--gl);background:var(--brand);color:var(--brand-ink);border-radius:0 0 28px 28px;backdrop-filter:none}
+  body:not([data-tela="mes"]) .top{background:transparent;color:var(--ink);border-radius:0;padding-bottom:2px}
+  body:not([data-tela="mes"]) .ttl h1{color:var(--ink)}
+  body:not([data-tela="mes"]) .ttl p{color:var(--ink-3)}
+  body[data-tela="lancar"] .ttl p{display:none}
   .ttl{grid-area:ttl}
   .ttl h1{font-size:22px;color:var(--brand-ink)}
   .ttl p{color:var(--brand-dim);font-size:13px}
@@ -756,6 +761,8 @@ details.fat[open]>summary{border-bottom:1px solid var(--line-2)}
   .mnav .ic,#btnRefresh{background:color-mix(in srgb,var(--brand-ink) 11%,transparent);border-color:transparent;color:var(--brand-ink)}
   .mnav select{min-width:0;width:100%;text-align:center;text-align-last:center;background-color:color-mix(in srgb,var(--brand-ink) 11%,transparent);border-color:transparent;color:var(--brand-ink);font:700 15px var(--f-body);padding:0 30px;background-repeat:no-repeat;background-position:right 14px center;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23d5e6da' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
   .mnav select option{color:var(--ink);background:var(--surface)}
+  body:not([data-tela="mes"]) .mnav .ic,body:not([data-tela="mes"]) #btnRefresh{background:var(--surface);border-color:var(--line);color:var(--ink)}
+  body:not([data-tela="mes"]) .mnav select{background-color:var(--surface);border-color:var(--line);color:var(--ink);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23728279' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
   #btnRefresh{grid-area:act;width:40px;padding:0;justify-content:center}
   #btnRefresh span{display:none}
   body[data-tela="mes"] .top{border-radius:0;padding-bottom:6px}
