@@ -771,6 +771,23 @@ details.fat[open]>summary{border-bottom:1px solid var(--line-2)}
 .fat-in{padding:6px 18px 16px}
 .fat-x{margin:10px 0 2px;font-size:12.5px;color:var(--ink-3)}
 .fat-x b{color:var(--ink-2)}
+details.fat>summary .fn small em{font-style:normal;font-weight:700}
+.fn small em.bad,.ft-now small em.bad{color:var(--bad)}
+.fn small em.warn,.ft-now small em.warn{color:var(--warn)}
+.ft-now small em{font-style:normal;font-weight:700}
+details.fat>summary .fv .btn{margin:0}
+.fat-pay{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin:10px 0 4px;padding:10px 12px;border-radius:12px;background:var(--good-soft);color:var(--good);font-size:13px;font-weight:600;line-height:1.4}
+.fat-pay .btn{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.fat-falta{display:block;margin-top:8px;font-size:12.5px;color:var(--ink-2);font-weight:600}
+.fat-falta.ok{color:var(--good)}
+.ft-msg{margin-bottom:14px}
+.ft-gap{margin-top:16px}
+.ft-now{border-color:color-mix(in srgb,var(--lime) 55%,var(--line-2));box-shadow:0 0 0 3px color-mix(in srgb,var(--lime) 22%,transparent),var(--shadow)}
+.ft-now .card-h{margin-bottom:8px}
+.ft-now .bk{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--bk,var(--brand));color:var(--bk-ink,#fff);font:800 12.5px/1 var(--f-display);letter-spacing:.02em}
+.ft-now .bk svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ft-now .lnk{all:unset;cursor:pointer;color:var(--accent);font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.ft-now .lnk:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
 
 /* ---------- lançar ---------- */
 .lanc{gap:16px;margin-top:4px}
@@ -2829,26 +2846,100 @@ V.mes = function (M) {
 /* ============================================================
    FATURAS: o que vence no mês seguinte, cartão por cartão, com as compras de cada um
    ============================================================ */
+/* marcar como paga = a caixinha do cartão naquele mês, no quadro da aba CONTAS A PAGAR (o saldo do banco não muda) */
+const FT = PF.FT = { open: new Set(), busy: null, msg: null };
+const ftChip = name => {
+  if (PF.norm(name) === 'OUTROS') return '<span class="bk">' + PF.svg('mor') + '</span>';
+  const b = PF.bank(name);
+  return '<span class="bk" style="--bk:' + (b.bg || 'var(--brand)') + ';--bk-ink:' + (b.ink || 'var(--brand-ink)') + '">' + esc(b.t) + '</span>';
+};
+function ftDue(it) {   // "Vence 10 nov" · "Vence em 3 dias (10 nov)" · "Atrasada, venceu 10 nov"
+  if (it.falta <= 0.005) return it.due ? 'Venceu ' + it.due.getDate() + ' ' + MES3[it.due.getMonth()] : 'Vários vencimentos';
+  const d = it.due ? it.due.getDate() + ' ' + MES3[it.due.getMonth()] : '';
+  if (it.tone === 'bad') return '<em class="bad">Atrasada</em>' + (d ? ', venceu ' + d : '');
+  if (it.tone === 'warn') return '<em class="warn">' + esc(it.st) + '</em>' + (d ? ' (' + d + ')' : '');
+  return d ? 'Vence ' + d : 'Vários vencimentos';
+}
+function ftPay(M, it, k) {   // lado direito: Paga, Gravando… ou o botão Paguei
+  if (it.falta <= 0.005) return '<span class="pill good">Paga</span>';
+  if (FT.busy === it.name + '|' + k) return '<span class="pill">Gravando…</span>';
+  if (!PF.tickCell(M, it.name, k)) return '<span class="pill">Em aberto</span>';
+  return '<button type="button" class="btn sm rx-q" data-act="ft-tick" data-v="' + esc(it.name) + '" data-k="' + k + '" data-on="1"' + (FT.busy ? ' disabled' : '') + ' aria-label="Marcar ' + esc(PF.nomeConta(it.name)) + ' como paga">Paguei</button>';
+}
+function ftMsg(k) {
+  const g = FT.msg; if (!g || g.m !== PF.S.m) return '';
+  return '<div class="lf-msg ' + g.t + ' ft-msg" role="' + (g.t === 'bad' ? 'alert' : 'status') + '"><span>' + g.h + '</span>' +
+    (g.undo ? '<button type="button" class="btn sm" data-act="ft-tick" data-v="' + esc(g.undo) + '" data-k="' + g.k + '" data-on="0"' + (FT.busy ? ' disabled' : '') + '>Desfazer</button>' : '') + '</div>';
+}
+function ftAgora(M, m) {   // no mês atual: faturas deste mês que ainda não foram marcadas (compras do mês anterior)
+  const now = PF.nowIdx(); if (m !== now) return '';
+  const C = PF.contasMes(M, now), ab = C.items.filter(it => it.falta > 0.005);
+  if (!ab.length) return '';
+  const mes = PF.MESL[PF.moOf(now)];
+  return '<section class="card ft-now" aria-label="Faturas de ' + mes + ' para pagar"><header class="card-h"><div><h2>Para pagar em ' + mes + '</h2>' +
+    '<p class="sub">Faturas e contas que vencem neste mês. Toque em Paguei quando pagar. <button type="button" class="lnk" data-act="ft-ver" data-v="' + (now - 1) + '">Ver as compras</button></p></div></header>' +
+    '<div class="tx-list">' + ab.map(it => '<div class="tx">' + ftChip(it.name) + '<span class="tx-m"><b>' + esc(PF.nomeConta(it.name)) + '</b><small>' + ftDue(it) + '</small></span>' +
+      '<span class="tx-v"><b>' + money2(it.falta) + '</b>' + ftPay(M, it, now) + '</span></div>').join('') + '</div></section>';
+}
+async function ftTick(name, k, on) {
+  const M = PF.M; if (!M || FT.busy || !isFinite(k)) return;
+  const say = (t, h) => { FT.msg = { t, h, m: PF.S.m }; PF.render(); };
+  if (!PF.mcp || PF.mode !== 'live') return say('bad', 'Nos dados de exemplo nada é gravado.');
+  if (!M.cap) return say('bad', 'Não consegui ler a aba CONTAS A PAGAR. Toque em Atualizar e tente de novo.');
+  const cell = PF.tickCell(M, name, k);
+  if (!cell) return say('warn', PF.nomeConta(name) + ': ' + PF.lab(k) + ' não está no quadro da aba CONTAS A PAGAR.');
+  const key = name + '|' + k, before = !!M.cap.tick.get(key);
+  FT.busy = key; FT.msg = null; PF.render();
+  try {
+    await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range: cell, values: [[!!on]] });
+    if (on) M.cap.tick.set(key, true); else M.cap.tick.delete(key);
+    FT.msg = on ? { t: 'good', h: '<b>' + esc(PF.nomeConta(name)) + '</b> marcada como paga.', undo: name, k, m: PF.S.m }
+      : { t: 'info', h: esc(PF.nomeConta(name)) + ' voltou para em aberto.', m: PF.S.m };
+    PF.toast(on ? 'Fatura paga' : 'Marcação desfeita');
+  } catch (err) {
+    if (before) M.cap.tick.set(key, true); else M.cap.tick.delete(key);
+    const c = err && err.code;
+    FT.msg = { t: 'bad', m: PF.S.m, h: ['server_unavailable', 'upstream_error', 'cancelled', 'rate_limited'].indexOf(c) >= 0 ? 'A planilha não respondeu. Toque em Atualizar e veja se ficou marcada antes de tentar de novo.' : errMsg(err, true).h };
+  } finally { FT.busy = null; refresh(); PF.render(); }
+}
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-act]'); if (!t || !PF.M) return;
+  const a = t.dataset.act; if (a.indexOf('ft-') !== 0) return;
+  ev.preventDefault();   // o botão fica dentro do resumo da fatura: tocar nele não abre nem fecha o cartão
+  if (a === 'ft-tick') ftTick(t.dataset.v, +t.dataset.k, t.dataset.on === '1');
+  else if (a === 'ft-ver') { PF.setMonth(+t.dataset.v); window.scrollTo(0, 0); }
+});
+document.addEventListener('toggle', ev => {
+  const d = ev.target; if (!d || !d.classList || !d.classList.contains('fat') || !d.dataset.name) return;
+  if (d.open) FT.open.add(d.dataset.name + '|' + d.dataset.k); else FT.open.delete(d.dataset.name + '|' + d.dataset.k);
+}, true);
+
 V.faturas = function (M) {
   const S = PF.S, m = S.m, k = m + 1, C = PF.contasMes(M, k), rowsK = PF.active(M, k);
   S.ledList = false;
   const prox = PF.MESL[PF.moOf(k)], pagas = C.items.filter(it => it.falta <= 0.005).length;
-  if (!C.items.length) return { title: 'Faturas', sub: 'Vencem em ' + prox, html: '<section class="card">' + PF.empty('Nada vence em ' + prox, 'Nenhuma fatura ou conta lançada para esse mês.') + '</section>' };
-  let h = '<section class="card fat-sum"><div><small>Total que vence em ' + prox + '</small><span class="big">' + money2(C.tot) + '</span></div>' +
-    '<div class="fat-prog"><span>' + pagas + ' de ' + C.items.length + ' pagas</span><div class="bar"><i style="width:' + (pagas / C.items.length * 100).toFixed(1) + '%"></i></div></div></section>';
+  const sub = 'Compras de ' + PF.MESL[PF.moOf(m)] + ', pagas no começo de ' + prox;
+  const agora = ftAgora(M, m);
+  if (!C.items.length) return { title: 'Faturas', sub, html: ftMsg(k) + agora + '<section class="card' + (agora ? ' ft-gap' : '') + '">' + PF.empty('Nada vence em ' + prox, 'Nenhuma fatura ou conta lançada para esse mês.') + '</section>' };
+  let h = ftMsg(k) + agora + '<section class="card fat-sum' + (agora ? ' ft-gap' : '') + '"><div><small>Total que vence em ' + prox + '</small><span class="big">' + money2(C.tot) + '</span></div>' +
+    '<div class="fat-prog"><span>' + pagas + ' de ' + C.items.length + ' pagas</span><div class="bar"><i style="width:' + (pagas / C.items.length * 100).toFixed(1) + '%"></i></div>' +
+    (C.falta > 0.005 ? '<small class="fat-falta">Falta pagar ' + PF.brl(C.falta) + '</small>' : '<small class="fat-falta ok">Tudo pago</small>') + '</div></section>';
   h += '<div class="fat-list">' + C.items.map(it => {
     const rs = rowsK.filter(r => r.card === it.name).sort((a, b) => ((b.date ? +b.date : 0) - (a.date ? +a.date : 0)) || b.row - a.row);
-    const casa = PF.norm(it.name) === 'OUTROS', b = casa ? null : PF.bank(it.name);
-    const chip = casa ? '<span class="bk">' + PF.svg('mor') + '</span>' : '<span class="bk" style="--bk:' + (b.bg || 'var(--brand)') + ';--bk-ink:' + (b.ink || 'var(--brand-ink)') + '">' + esc(b.t) + '</span>';
-    const due = it.due ? 'Vence ' + it.due.getDate() + ' ' + MES3[it.due.getMonth()] : 'Vários vencimentos';
-    const st = it.falta <= 0.005 ? '<span class="pill good">Paga</span>' : it.st === 'Atrasada' ? '<span class="pill bad">Atrasada</span>' : it.tone === 'warn' ? '<span class="pill warn">' + esc(it.st) + '</span>' : '<span class="pill">Em aberto</span>';
     const outros = it.fam + it.neg, n = rs.length + (rs.length === 1 ? ' lançamento' : ' lançamentos');
-    return '<details class="card fat"><summary>' + chip + '<span class="fn"><b>' + esc(PF.nomeConta(it.name)) + '</b><small>' + due + ', ' + n + '</small></span><span class="fv"><b>' + money2(it.val) + '</b>' + st + '</span></summary>' +
-      '<div class="fat-in">' + (outros > 0.005 ? '<p class="fat-x">Inclui <b>' + PF.brl(outros) + '</b> de família e negócios.</p>' : '') +
+    const cell = PF.tickCell(M, it.name, k);
+    let pay = '';
+    if (it.tk) pay = '<div class="fat-pay"><span>Marcada como paga na planilha.</span><button type="button" class="btn sm" data-act="ft-tick" data-v="' + esc(it.name) + '" data-k="' + k + '" data-on="0"' + (FT.busy ? ' disabled' : '') + '>' + (FT.busy === it.name + '|' + k ? 'Gravando…' : 'Desfazer') + '</button></div>';
+    else if (it.falta <= 0.005) pay = '<div class="fat-pay"><span>Paga: o valor está registrado na aba PAGAMENTOS.</span></div>';
+    else if (it.reg > 0.005) pay = '<p class="fat-x">Já pagou <b>' + PF.brl(it.reg) + '</b> (aba PAGAMENTOS). Falta <b>' + PF.brl(it.falta) + '</b>; o Paguei marca a fatura inteira.</p>';
+    else if (!cell) pay = '<p class="fat-x">Para marcar como paga, ' + PF.lab(k) + ' precisa estar no quadro da aba CONTAS A PAGAR.</p>';
+    return '<details class="card fat" data-name="' + esc(it.name) + '" data-k="' + k + '"' + (FT.open.has(it.name + '|' + k) ? ' open' : '') + '><summary>' + ftChip(it.name) +
+      '<span class="fn"><b>' + esc(PF.nomeConta(it.name)) + '</b><small>' + ftDue(it) + ', ' + n + '</small></span><span class="fv"><b>' + money2(it.val) + '</b>' + ftPay(M, it, k) + '</span></summary>' +
+      '<div class="fat-in">' + pay + (outros > 0.005 ? '<p class="fat-x">Inclui <b>' + PF.brl(outros) + '</b> de família e negócios.</p>' : '') +
       '<div class="tx-list">' + rs.map(r => PF.txRow(M, r, { noCard: 1, parc: parcTxt(PF.parcelaTxt(r, k, 1)) })).join('') + '</div>' +
       '<div class="tx-foot"><span>Total da fatura</span><b>' + money2(it.val) + '</b></div></div></details>';
   }).join('') + '</div>';
-  return { title: 'Faturas', sub: 'Compras de ' + PF.MESL[PF.moOf(m)] + ', pagas no começo de ' + prox, html: h };
+  return { title: 'Faturas', sub, html: h };
 };
 
 V.lancar = function (M) {
