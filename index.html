@@ -637,7 +637,7 @@ body{font:400 14.5px/1.5 var(--f-body);letter-spacing:-.003em}
 
 /* ---------- para onde foi ---------- */
 .mes-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;margin-top:16px;align-items:start}
-@media (min-width:1100px){.mes-grid{grid-template-columns:minmax(0,400px) minmax(0,1fr)}.mes-grid>.brk{grid-column:1;grid-row:1}.mes-grid>.lst{grid-column:2;grid-row:1 / span 2}.mes-grid>.rec{grid-column:1;grid-row:2}}
+@media (min-width:1100px){.mes-grid{grid-template-columns:minmax(0,400px) minmax(0,1fr)}.mes-grid>.brk{grid-column:1;grid-row:1}.mes-grid>.lst{grid-column:2;grid-row:1 / span 3}.mes-grid>.rec{grid-column:1;grid-row:2}.mes-grid>.arc{grid-column:1;grid-row:3}}
 .brk .rows{gap:2px}
 .brk .rw{grid-template-columns:minmax(0,1fr) auto auto;gap:6px 12px;padding:10px 4px;border-top:0;border-radius:12px}
 .brk .rw .sp{display:none}
@@ -789,6 +789,14 @@ details.fat>summary .fv .btn{margin:0}
 .ft-now .lnk{all:unset;cursor:pointer;color:var(--accent);font-weight:700;text-decoration:underline;text-underline-offset:2px}
 .ft-now .lnk:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
 .ft-conta .tx-v{gap:5px}
+.ar-f{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end}
+.ar-date{height:52px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0 12px;font:600 14px var(--f-body);min-width:0}
+@media (max-width:380px){.ar-f{grid-template-columns:minmax(0,1fr)}}
+.ar-det{margin:0 0 12px 54px;padding:4px 14px 10px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line-2)}
+.ar-h{margin:12px 0 2px;font:700 12.5px/1.3 var(--f-body);color:var(--ink-2)}
+.ar-rc .tx-v{gap:4px}
+.tx.ar .tx-m small{white-space:normal}
+@media (max-width:560px){.ar-det{margin-left:0}}
 details.fat>summary .fv .fv-de{margin-top:-3px;font-size:12px;font-weight:600;color:var(--ink-3);white-space:nowrap}
 .tx-foot.sub{padding-top:10px}
 .tx-foot.sub span{font-weight:500;color:var(--ink-3)}
@@ -2812,7 +2820,7 @@ V.mes = function (M) {
   const S = PF.S, m = S.m;
   S.ledPred = null; S.ledList = true;
   const ae = document.activeElement;
-  const keep = ae && ae.id && /^rx-/.test(ae.id) ? { id: ae.id, s: ae.selectionStart, e: ae.selectionEnd } : null;
+  const keep = ae && ae.id && /^(rx|ar)-/.test(ae.id) ? { id: ae.id, s: ae.selectionStart, e: ae.selectionEnd } : null;
   const rows = PF.ciclo(M, m), cas = rows.filter(DO_CASAL), outros = rows.filter(r => !DO_CASAL(r));
   const ents = PF.entradas(M, m), aReceber = PF.sum(ents.filter(e => !e.ok), e => e.val);
   const entrou = PF.sum(ents, e => e.val), gastou = PF.sum(cas), sobrou = entrou - gastou, tot = PF.sum(rows);
@@ -2830,7 +2838,7 @@ V.mes = function (M) {
     '<div class="h-stats"><div><span class="h-ic in">' + SVG_IN + '</span><small>Entradas</small><b>' + money2(entrou) + '</b>' +
     (aReceber > 0.005 ? '<em>' + PF.brl(aReceber) + ' a receber</em>' : entrou > 0.005 ? '<em>tudo recebido</em>' : '') + '</div>' +
     '<div><span class="h-ic out">' + SVG_OUT + '</span><small>Gastos de vocês</small><b>' + money2(gastou) + '</b></div></div></section>';
-  if (outros.length) h += '<p class="nota">' + SVG_INFO + '<span>Família e negócios usaram <b>' + PF.brl(PF.sum(outros)) + '</b> dos cartões de vocês. Esse valor aparece na lista, mas fica fora da conta acima porque eles devolvem.</span></p>';
+  if (outros.length) h += '<p class="nota">' + SVG_INFO + '<span>Família e negócios usaram <b>' + PF.brl(PF.sum(outros)) + '</b> dos cartões de vocês. Fica fora da conta acima porque eles devolvem: veja em A receber.</span></p>';
   RX.seen = new Set();
   h += rxDue(M, m);
 
@@ -2843,7 +2851,7 @@ V.mes = function (M) {
 
   const rec = rxCard(M, m);
   const lst = PF.ledPanel(M, 'Lançamentos', { list: 1, sub: 'Faturas que vencem em ' + prox + ', contas de ' + prox + ' e Pix e débito de ' + mesN + '.' });
-  h += '<div class="mes-grid">' + brk + rec + lst + '</div>';
+  h += '<div class="mes-grid">' + brk + rec + arCard(M, m) + lst + '</div>';
   return {
     title: saudacao(), sub: nomesCasal(M), html: h,
     after: () => {
@@ -3463,6 +3471,128 @@ function rxCard(M, m) {
   if (RX.msg && RX.seen && !RX.seen.has(RX.msg.key)) h += '<div class="lf-msg ' + RX.msg.t + '" role="alert" style="margin-top:10px"><span>' + RX.msg.h + '</span></div>';
   return h + '</section>';
 }
+/* ============================================================
+   A RECEBER: o que família e negócios devem ao casal (compras deles nos cartões de vocês)
+   Conta acumulada: tudo o que foi lançado no nome da pessoa até as faturas do mês seguinte,
+   menos o que ela já devolveu (linhas "Reembolso recebido" da aba RECEITAS).
+   ============================================================ */
+const AR = PF.AR = { open: null, edit: null, val: '', date: '', busy: null, msg: null };
+function arLista(M, m) {
+  const k = m + 1, out = [];
+  for (const n of M.respList) {
+    const r = M.respMap.get(n);
+    if (!r || !r.reemb || (r.classe !== 'Família' && r.classe !== 'Negócio')) continue;
+    const L = PF.receberLinha(M, n, k), ant = L.saldo - L.devMes + L.rcbMes;
+    if (L.devMes <= 0.005 && L.rcbMes <= 0.005 && Math.abs(L.saldo) <= 0.005) continue;
+    const recs = M.rec.filter(x => x.tipo === 'Reembolso recebido' && x.resp === n && x.ini === k).sort((a, b) => a.row - b.row);
+    out.push({ n, neg: r.classe === 'Negócio', k, mes: L.devMes, ant, total: L.devMes + ant, rcb: L.rcbMes, falta: L.saldo, recs });
+  }
+  return out.sort((a, b) => (b.falta > 0.005) - (a.falta > 0.005) || b.falta - a.falta || b.total - a.total);
+}
+PF.arLista = arLista;
+function arCard(M, m) {
+  const P = arLista(M, m); if (!P.length) return '';
+  const k = m + 1, mesN = PF.MESL[PF.moOf(m)], prox = PF.MESL[PF.moOf(k)];
+  const tot = PF.sum(P, p => Math.max(0, p.total)), rcb = PF.sum(P, p => p.rcb), falta = PF.sum(P, p => Math.max(0, p.falta));
+  let h = '<section class="card arc" id="arCard"><header class="card-h"><div><h2>A receber</h2><p class="sub">O que família e negócios gastaram nos cartões de vocês, nas faturas de ' + prox + ' (compras de ' + mesN + ').</p></div></header>';
+  if (tot > 0.005) h += '<div class="rx-prog"><div class="rx-leg"><span><i class="ok"></i>Recebido <b>' + PF.brl(rcb) + '</b></span><span><i></i>Falta <b>' + PF.brl(falta) + '</b></span></div>' +
+    '<div class="bar" role="img" aria-label="Recebido ' + PF.brl(rcb) + ' de ' + PF.brl(tot) + '"><i style="width:' + Math.min(100, rcb / tot * 100).toFixed(1) + '%"></i></div></div>';
+  if (AR.msg && AR.msg.m === m && !AR.msg.n) h += '<div class="lf-msg ' + AR.msg.t + '" role="status"><span>' + AR.msg.h + '</span></div>';
+  h += '<div class="tx-list">' + P.map(p => arRow(M, p, m)).join('') + '</div></section>';
+  return h;
+}
+function arRow(M, p, m) {
+  const key = p.n + '|' + p.k, open = AR.open === key, busy = AR.busy === key, dis = AR.busy ? ' disabled' : '';
+  const nome = PF.nome(p.n), quit = p.falta <= 0.005;
+  const sub = p.rcb > 0.005 ? 'Pagou ' + PF.brl(p.rcb) + ' de ' + PF.brl(Math.max(0, p.total)) : 'Total ' + PF.brl(Math.max(0, p.total));
+  const right = busy ? '<span class="pill">Gravando…</span>'
+    : quit ? '<span class="pill good">' + (p.falta < -0.005 ? 'Crédito ' + PF.brl(-p.falta) : 'Quitado') + '</span>'
+    : '<button type="button" class="btn sm rx-q" data-act="ar-rcb" data-v="' + esc(key) + '"' + dis + ' aria-label="Registrar quanto ' + esc(nome) + ' pagou">Recebi</button>';
+  let h = '<div class="tx rx ar' + (quit ? ' ok' : '') + (open ? ' on' : '') + '" data-act="ar-open" data-v="' + esc(key) + '">' +
+    '<span class="tx-ic" style="--tint:color-mix(in srgb,' + PF.respColor(M, p.n) + ' 18%,var(--surface));--tint-ink:' + PF.respColor(M, p.n) + '">' + PF.svg(p.neg ? 'neg' : 'pes') + '</span>' +
+    '<span class="tx-m"><b><button type="button" class="rx-nm" data-act="ar-open" data-v="' + esc(key) + '" aria-expanded="' + open + '">' + esc(nome) + '</button></b><small>' + sub + '</small></span>' +
+    '<span class="tx-v"><b>' + money2(Math.max(0, p.falta)) + '</b>' + right + '</span></div>';
+  if (AR.edit === key) h += arEditor(p, key);
+  else if (AR.msg && AR.msg.n === key) h += '<div class="lf-msg ' + AR.msg.t + ' rx-msg" role="alert"><span>' + AR.msg.h + '</span></div>';
+  if (open) h += arDetail(M, p, key);
+  return h;
+}
+function arEditor(p, key) {
+  const dis = AR.busy ? ' disabled' : '';
+  return '<div class="rx-ed" role="group" aria-label="Recebi de ' + esc(PF.nome(p.n)) + '">' +
+    '<div class="ar-f"><label class="rx-f"><span>Quanto ' + esc(PF.nome(p.n)) + ' pagou</span><span class="rx-money"><i>R$</i><input id="ar-val" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(AR.val) + '"' + dis + '></span></label>' +
+    '<label class="rx-f"><span>Dia</span><input type="date" id="ar-date" class="ar-date" value="' + esc(AR.date) + '"' + dis + '></label></div>' +
+    '<div class="rx-acts"><button type="button" class="btn primary" data-act="ar-save" data-v="' + esc(key) + '"' + dis + '>' + (AR.busy === key ? 'Gravando…' : 'Salvar') + '</button><button type="button" class="btn" data-act="ar-cancel"' + dis + '>Cancelar</button></div>' +
+    '<p class="rx-help">Falta ' + PF.brl(Math.max(0, p.falta)) + '. Pagou só uma parte? Troque o valor. Entra na aba RECEITAS como Reembolso recebido.</p>' +
+    (AR.msg && AR.msg.n === key ? '<div class="lf-msg ' + AR.msg.t + '" role="alert"><span>' + AR.msg.h + '</span></div>' : '') + '</div>';
+}
+function arDetail(M, p, key) {
+  const rs = PF.active(M, p.k).filter(r => r.resp === p.n).sort((a, b) => ((b.date ? +b.date : 0) - (a.date ? +a.date : 0)) || b.row - a.row);
+  let h = '<div class="ar-det">';
+  if (Math.abs(p.ant) > 0.005) h += '<p class="fat-x">' + (p.ant > 0 ? 'Inclui <b>' + PF.brl(p.ant) + '</b> que ficou de meses anteriores.' : 'Desconta <b>' + PF.brl(-p.ant) + '</b> pago a mais antes.') + '</p>';
+  h += '<p class="ar-h">Compras nas faturas de ' + PF.MESL[PF.moOf(p.k)] + ' · ' + PF.brl(p.mes) + '</p>';
+  h += rs.length ? '<div class="tx-list">' + rs.map(r => PF.txRow(M, r, { parc: parcTxt(PF.parcelaTxt(r, p.k, 1)) })).join('') + '</div>' : '<p class="fat-x">Nenhuma compra nova.</p>';
+  if (p.recs.length) h += '<p class="ar-h">Já recebido</p><div class="tx-list">' + p.recs.map(x => '<div class="tx ar-rc"><span class="tx-ic g-rec">' + PF.svg('rec') + '</span><span class="tx-m"><b>' + esc(x.desc) + '</b><small>' + (x.receb ? 'em ' + brOf(x.receb) : 'aba RECEITAS, linha ' + x.row) + '</small></span>' +
+    '<span class="tx-v in"><b>+' + money2(x.val) + '</b><button type="button" class="ft-undo" data-act="ar-del" data-v="' + esc(key) + '" data-r="' + x.row + '"' + (AR.busy ? ' disabled' : '') + '>desfazer</button></span></div>').join('') + '</div>';
+  return h + '</div>';
+}
+async function arSave(key) {
+  const M = PF.M; if (!M || AR.busy) return;
+  const [n, ks] = String(key).split('|'), k = +ks, p = arLista(M, k - 1).find(x => x.n === n);
+  const fail = (t, h) => { AR.msg = { t, h, n: key, m: PF.S.m }; PF.render(); };
+  if (!p) return fail('warn', 'Não achei essa pessoa. Toque em Atualizar.');
+  if (!PF.mcp || PF.mode !== 'live') return fail('bad', 'Nos dados de exemplo nada é gravado.');
+  const v = valOf(AR.val), d = isoToBR(AR.date);
+  if (!(v > 0)) return fail('bad', 'Digite quanto entrou (ex.: 250,00).');
+  if (!d) return fail('bad', 'Escolha o dia em que o dinheiro entrou.');
+  AR.busy = key; AR.msg = null; PF.render();
+  try {
+    const vals = await readRec(), row = freeRecRow(vals);
+    const desc = (p.neg ? 'Repasse de ' : 'Reembolso de ') + n, obs = 'Recebido em ' + d + ', marcado pelo app.';
+    await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range: REC_A1('A' + row, 'H' + row), values: [[firstBR(k), desc, n, 'Reembolso recebido', v, 'Não', '', obs]] });
+    M.rec.push({ row, desc, resp: n, tipo: 'Reembolso recebido', val: v, repete: 'Não', obs, ini: k, fim: k, dia: null, receb: PF.pDate(d), recebTxt: d });
+    try { await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range: REC_A1('L' + row), values: [[d]] }); } catch (e1) { }
+    const falta = Math.max(0, p.falta - v);
+    AR.edit = null; AR.msg = { t: 'good', m: PF.S.m, h: '<b>+' + PF.brl(v) + '</b> de ' + esc(PF.nome(n)) + '. ' + (falta > 0.005 ? 'Falta ' + PF.brl(falta) + '.' : 'Quitado.') };
+    PF.toast('Recebido');
+  } catch (err) {
+    AR.msg = { t: 'bad', n: key, m: PF.S.m, h: ['server_unavailable', 'upstream_error', 'cancelled', 'rate_limited'].indexOf(err && err.code) >= 0 ? 'A planilha não respondeu. Toque em Atualizar e confira antes de tentar de novo.' : errMsg(err, true).h };
+  } finally { M._met = new Map(); AR.busy = null; refresh(); PF.render(); }
+}
+async function arDel(key, row) {
+  const M = PF.M; if (!M || AR.busy) return;
+  const x = M.rec.find(y => y.row === row && y.tipo === 'Reembolso recebido'); if (!x) return;
+  AR.busy = key; AR.msg = null; PF.render();
+  try {
+    const v = (await readRec())[row - 1] || [];
+    if (PF.norm(v[1]) !== PF.norm(x.desc) || PF.norm(v[2]) !== PF.norm(x.resp) || PF.norm(v[3]) !== 'REEMBOLSO RECEBIDO') throw { code: 'moved' };
+    await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range: REC_A1('A' + row, 'H' + row), values: [['', '', '', '', '', '', '', '']] });
+    try { await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range: REC_A1('L' + row), values: [['']] }); } catch (e1) { }
+    M.rec = M.rec.filter(y => y !== x);
+    AR.msg = { t: 'info', m: PF.S.m, h: 'Desfeito: ' + PF.brl(x.val) + ' de ' + esc(PF.nome(x.resp)) + ' voltou para a receber.' };
+    PF.toast('Desfeito');
+  } catch (err) {
+    AR.msg = { t: 'warn', m: PF.S.m, h: err && err.code === 'moved' ? 'Essa linha mudou na aba RECEITAS. Toque em Atualizar e confira.' : errMsg(err, true).h };
+  } finally { M._met = new Map(); AR.busy = null; refresh(); PF.render(); }
+}
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-act]'); if (!t || !PF.M) return;
+  const a = t.dataset.act, v = t.dataset.v; if (a.indexOf('ar-') !== 0) return;
+  if (a === 'ar-open' && ev.target.closest('a,input,label')) return;
+  if (a === 'ar-open') { AR.open = AR.open === v ? null : v; PF.render(); }
+  else if (a === 'ar-rcb') {
+    const [n, ks] = String(v).split('|'), p = arLista(PF.M, +ks - 1).find(x => x.n === n); if (!p || AR.busy) return;
+    AR.edit = v; AR.val = nf2.format(Math.max(0, p.falta)); AR.date = isoToday(); AR.msg = null; PF.render();
+    const el = document.getElementById('ar-val'); if (el && !matchMedia('(hover: none)').matches) try { el.focus({ preventScroll: true }); el.select(); } catch (er) { }
+  }
+  else if (a === 'ar-cancel') { AR.edit = null; AR.msg = null; PF.render(); }
+  else if (a === 'ar-save') arSave(v);
+  else if (a === 'ar-del') arDel(v, +t.dataset.r);
+});
+document.addEventListener('input', ev => { const el = ev.target; if (!el) return; if (el.id === 'ar-val') AR.val = el.value; else if (el.id === 'ar-date') AR.date = el.value; });
+document.addEventListener('change', ev => { const el = ev.target; if (el && el.id === 'ar-date') AR.date = el.value; });
+document.addEventListener('keydown', ev => { if (ev.key === 'Enter' && ev.target && ev.target.id === 'ar-val' && AR.edit) { ev.preventDefault(); arSave(AR.edit); } });
+
 function rxDue(M, m) {   // no mês atual: salários do mês anterior que ainda não foram marcados
   if (m !== PF.nowIdx()) return '';
   const k = m - 1, E = entradas(M, k).filter(e => e.sal && !e.ok);
