@@ -637,7 +637,7 @@ body{font:400 14.5px/1.5 var(--f-body);letter-spacing:-.003em}
 
 /* ---------- para onde foi ---------- */
 .mes-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;margin-top:16px;align-items:start}
-@media (min-width:1100px){.mes-grid{grid-template-columns:minmax(0,400px) minmax(0,1fr)}.mes-grid>.brk{grid-column:1;grid-row:1}.mes-grid>.lst{grid-column:2;grid-row:1 / span 3}.mes-grid>.rec{grid-column:1;grid-row:2}.mes-grid>.arc{grid-column:1;grid-row:3}}
+@media (min-width:1100px){.mes-grid{grid-template-columns:minmax(0,400px) minmax(0,1fr)}.mes-grid>.brk{grid-column:1;grid-row:1}.mes-grid>.lst{grid-column:2;grid-row:1 / span 4}.mes-grid>.mtc{grid-column:1;grid-row:1}.mes-grid>.brk{grid-row:2}.mes-grid>.rec{grid-column:1;grid-row:3}.mes-grid>.arc{grid-column:1;grid-row:4}}
 .brk .rows{gap:2px}
 .brk .rw{grid-template-columns:minmax(0,1fr) auto auto;gap:6px 12px;padding:10px 4px;border-top:0;border-radius:12px}
 .brk .rw .sp{display:none}
@@ -795,6 +795,41 @@ details.fat>summary .fv .btn{margin:0}
 .ar-det{margin:0 0 12px 54px;padding:4px 14px 10px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line-2)}
 .ar-h{margin:12px 0 2px;font:700 12.5px/1.3 var(--f-body);color:var(--ink-2)}
 .ar-rc .tx-v{gap:4px}
+.mt-edit{all:unset;cursor:pointer;font:700 13px var(--f-body);color:var(--accent)}
+.mt-tot{margin:-4px 0 12px}
+.mt-big{display:flex;align-items:baseline;gap:8px}
+.mt-big b{font:800 26px/1 var(--f-display);letter-spacing:-.02em}
+.mt-big b .cur{font-size:.6em;font-weight:600;color:var(--ink-3);margin-right:.2em}
+.mt-big small{font-size:13px;color:var(--ink-3);font-weight:600}
+.mt-bar{display:block;height:8px;border-radius:99px;background:var(--surface-3);overflow:hidden;margin-top:10px}
+.mt-bar i{display:block;height:100%;border-radius:99px;background:var(--good)}
+.mt-bar.warn i{background:var(--warn)}
+.mt-bar.bad i{background:var(--bad)}
+.mt-pace{margin-top:8px;font-size:13px;color:var(--ink-2);line-height:1.45}
+.mt-pace b{color:var(--ink)}
+.mt-alert{display:flex;gap:8px;align-items:flex-start;margin:0 0 10px;padding:10px 12px;border-radius:12px;background:var(--warn-soft);color:var(--ink);font-size:13px;line-height:1.45}
+.mt-alert svg{flex:none;width:17px;height:17px;margin-top:1px;fill:none;stroke:var(--warn);stroke-width:1.9;stroke-linecap:round}
+.mt-list{display:flex;flex-direction:column}
+.mt-row{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:42px minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:12px;row-gap:8px;align-items:center;padding:11px 2px;border-top:1px solid var(--line-2);width:100%}
+.mt-row:first-child{border-top:0}
+.mt-row:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.mt-row .tx-ic{grid-row:1 / span 2}
+.mt-m{min-width:0;display:flex;flex-direction:column;gap:2px}
+.mt-m b{font-weight:600;font-size:14.5px;color:var(--ink)}
+.mt-m small{font-size:12.5px;color:var(--ink-3)}
+.mt-row.bad .mt-m small{color:var(--bad);font-weight:600}
+.mt-row.warn .mt-m small{color:var(--warn);font-weight:600}
+.mt-v{display:flex;flex-direction:column;align-items:flex-end;gap:2px;white-space:nowrap}
+.mt-v b{font:700 14.5px/1.3 var(--f-display);color:var(--ink)}
+.mt-v b .cur{font-size:.78em;font-weight:600;color:var(--ink-3);margin-right:.22em}
+.mt-v small{font-size:12px;color:var(--ink-3)}
+.mt-row .mt-bar{grid-column:2 / -1;margin-top:0;height:6px}
+.mt-det{margin:0 0 10px 54px;padding:4px 14px 8px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line-2)}
+.mt-ed{margin:0 0 12px}
+.mt-in{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px;align-items:center;font:600 13px var(--f-body);color:var(--ink-2)}
+.mt-in .rx-money{height:44px}
+.mt-in .rx-money input{font-size:18px}
+@media (max-width:560px){.mt-det{margin-left:0}}
 .tx.ar .tx-m small{white-space:normal}
 @media (max-width:560px){.ar-det{margin-left:0}}
 details.fat>summary .fv .fv-de{margin-top:-3px;font-size:12px;font-weight:600;color:var(--ink-3);white-space:nowrap}
@@ -2851,7 +2886,7 @@ V.mes = function (M) {
 
   const rec = rxCard(M, m);
   const lst = PF.ledPanel(M, 'Lançamentos', { list: 1, sub: 'Faturas que vencem em ' + prox + ', contas de ' + prox + ' e Pix e débito de ' + mesN + '.' });
-  h += '<div class="mes-grid">' + brk + rec + arCard(M, m) + lst + '</div>';
+  h += '<div class="mes-grid">' + metaCard(M, m) + brk + rec + arCard(M, m) + lst + '</div>';
   return {
     title: saudacao(), sub: nomesCasal(M), html: h,
     after: () => {
@@ -3476,6 +3511,104 @@ function rxCard(M, m) {
    Conta acumulada: tudo o que foi lançado no nome da pessoa até as faturas do mês seguinte,
    menos o que ela já devolveu (linhas "Reembolso recebido" da aba RECEITAS).
    ============================================================ */
+/* ============================================================
+   METAS DO MÊS: teto para os gastos do dia a dia do casal (sem fixos e parcelas)
+   Os tetos ficam na área de ajustes da aba CONTAS A PAGAR (chave "meta|Mercado", mês 0).
+   Sem nada gravado, valem os tetos combinados abaixo.
+   ============================================================ */
+const METAS = [
+  { k: 'Mercado', cats: ['Mercado'], v: 1100 },
+  { k: 'Saúde e farmácia', cats: ['Saúde e farmácia'], v: 300 },
+  { k: 'Restaurantes e lazer', cats: ['Restaurantes e delivery', 'Lazer e viagens'], v: 200 },
+  { k: 'Roupas e cuidados', cats: ['Vestuário e cuidados pessoais'], v: 100 },
+  { k: 'Carro e moto', cats: ['Combustível', 'Automóvel'], v: 150 },
+  { k: 'Eletrônicos', cats: ['Eletrônicos'], v: 0 },
+  { k: 'Coisas para casa', cats: ['Casa: compras e reformas'], v: 0 },
+  { k: 'Outros', cats: null, v: 50 }   // o que não cair nas outras
+];
+const MT_ICO = { 'Mercado': 'ali', 'Saúde e farmácia': 'sau', 'Restaurantes e lazer': 'laz', 'Roupas e cuidados': 'pes', 'Carro e moto': 'tra', 'Eletrônicos': 'tec', 'Coisas para casa': 'mor', 'Outros': 'out' };
+const MT = PF.MT = { open: null, edit: false, vals: {}, busy: false, msg: null };
+const varCasal = r => r.classe === 'Pessoal' && r.tipo !== 'PARCELADO' && r.tipo !== 'FIXO';
+const metaTeto = (M, mt) => { const a = M.cap && M.cap.adj && M.cap.adj.get('meta|' + mt.k + '#0'); return a ? a.v : mt.v; };
+function metasMes(M, m) {
+  const rows = PF.ciclo(M, m).filter(varCasal), known = new Set();
+  METAS.forEach(x => (x.cats || []).forEach(c => known.add(c)));
+  return METAS.map(mt => {
+    const rs = rows.filter(r => mt.cats ? mt.cats.indexOf(r.cat) >= 0 : !known.has(r.cat));
+    const teto = metaTeto(M, mt), usado = PF.sum(rs);
+    return { k: mt.k, teto, usado, rs, pct: teto > 0 ? usado / teto : (usado > 0.005 ? 9 : 0) };
+  });
+}
+PF.metasMes = metasMes;
+function metaCard(M, m) {
+  const X = metasMes(M, m), tot = PF.sum(X, x => x.teto), us = PF.sum(X, x => x.usado), rest = tot - us, now = PF.nowIdx();
+  let pace;
+  if (m === now) {
+    const d = new Date(), dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), left = dim - d.getDate() + 1, wk = Math.max(1, left / 7);
+    pace = rest > 0.005 ? 'Ainda dá para gastar <b>' + PF.brl(rest) + '</b> até o fim do mês, cerca de <b>' + PF.brl(rest / wk) + ' por semana</b>.' : 'O teto do mês já passou <b>' + PF.brl(-rest) + '</b>.';
+  } else if (m < now) pace = rest >= -0.005 ? 'O mês fechou <b>' + PF.brl(rest) + '</b> abaixo do teto.' : 'O mês passou <b>' + PF.brl(-rest) + '</b> do teto.';
+  else pace = 'Teto do mês: ' + PF.brl(tot) + '.';
+  const tone = p => p > 1.0001 ? 'bad' : p >= 0.8 ? 'warn' : 'ok';
+  const alerta = X.filter(x => x.pct >= 0.8 && x.usado > 0.005);
+  let h = '<section class="card mtc" id="mtCard"><header class="card-h"><div><h2>Metas do mês</h2><p class="sub">Gastos do dia a dia de vocês, sem fixos e parcelas.</p></div>' +
+    '<button type="button" class="lnk mt-edit" data-act="mt-edit">' + (MT.edit ? 'Fechar' : 'Ajustar metas') + '</button></header>';
+  h += '<div class="mt-tot"><div class="mt-big"><b>' + money2(us) + '</b><small>de ' + PF.brl(tot) + '</small></div><div class="mt-bar ' + tone(tot > 0 ? us / tot : 0) + '"><i style="width:' + Math.min(100, tot > 0 ? us / tot * 100 : 0).toFixed(1) + '%"></i></div><p class="mt-pace">' + pace + '</p></div>';
+  if (alerta.length) h += '<p class="mt-alert">' + SVG_INFO + '<span>' + alerta.map(x => '<b>' + esc(x.k) + '</b> ' + (x.pct > 1.0001 ? 'passou do teto' : 'em ' + Math.round(x.pct * 100) + '%')).join(' · ') + '</span></p>';
+  if (MT.edit) {
+    h += '<div class="rx-ed mt-ed">' + METAS.map((mt, i) => '<label class="mt-in"><span>' + esc(mt.k) + '</span><span class="rx-money"><i>R$</i><input id="mt-' + i + '" data-k="' + esc(mt.k) + '" inputmode="decimal" value="' + esc(MT.vals[mt.k] != null ? MT.vals[mt.k] : nf2.format(metaTeto(M, mt))) + '"' + (MT.busy ? ' disabled' : '') + '></span></label>').join('') +
+      '<div class="rx-acts"><button type="button" class="btn primary" data-act="mt-save"' + (MT.busy ? ' disabled' : '') + '>' + (MT.busy ? 'Gravando…' : 'Salvar metas') + '</button><button type="button" class="btn" data-act="mt-edit"' + (MT.busy ? ' disabled' : '') + '>Cancelar</button></div>' +
+      '<p class="rx-help">Vale para todos os meses e para os dois celulares. Fica guardado na aba CONTAS A PAGAR.</p>' +
+      (MT.msg ? '<div class="lf-msg ' + MT.msg.t + '"><span>' + MT.msg.h + '</span></div>' : '') + '</div>';
+  } else if (MT.msg) h += '<div class="lf-msg ' + MT.msg.t + '" style="margin-bottom:10px"><span>' + MT.msg.h + '</span></div>';
+  h += '<div class="mt-list">' + X.map(x => {
+    const t = tone(x.pct), open = MT.open === x.k, ic = MT_ICO[x.k] || 'out';
+    const st = x.teto <= 0.005 ? (x.usado > 0.005 ? 'passou ' + PF.brl(x.usado) : 'nada neste mês') : x.usado > x.teto + 0.005 ? 'passou ' + PF.brl(x.usado - x.teto) : 'faltam ' + PF.brl(x.teto - x.usado);
+    let r = '<button type="button" class="mt-row ' + t + '" data-act="mt-open" data-v="' + esc(x.k) + '" aria-expanded="' + open + '">' +
+      '<span class="tx-ic g-' + ic + '">' + PF.svg(ic) + '</span><span class="mt-m"><b>' + esc(x.k) + '</b><small>' + st + '</small></span>' +
+      '<span class="mt-v"><b>' + money2(x.usado) + '</b><small>de ' + PF.brl(x.teto) + '</small></span>' +
+      '<span class="mt-bar ' + t + '"><i style="width:' + Math.min(100, x.teto > 0 ? x.usado / x.teto * 100 : (x.usado > 0 ? 100 : 0)).toFixed(1) + '%"></i></span></button>';
+    if (open) r += '<div class="mt-det">' + (x.rs.length ? '<div class="tx-list">' + x.rs.slice().sort((a, b) => b.val - a.val).map(rr => PF.txRow(M, rr)).join('') + '</div>' : '<p class="fat-x">Nenhum gasto nesta meta.</p>') + '</div>';
+    return r;
+  }).join('') + '</div></section>';
+  return h;
+}
+async function mtSave() {
+  const M = PF.M, cap = M && M.cap; if (!M || MT.busy) return;
+  const fail = h => { MT.msg = { t: 'bad', h }; PF.render(); };
+  if (!PF.mcp || PF.mode !== 'live') return fail('Nos dados de exemplo nada é gravado.');
+  if (!cap || !cap.adjRow0) return fail('Não consegui ler a aba CONTAS A PAGAR. Toque em Atualizar.');
+  const novos = [];
+  for (const mt of METAS) {
+    const raw = MT.vals[mt.k]; if (raw == null) continue;
+    const v = valOf(raw); if (v == null || v < 0) return fail('Confira o valor de ' + esc(mt.k) + '.');
+    if (Math.abs(v - metaTeto(M, mt)) > 0.005) novos.push({ mt, v });
+  }
+  if (!novos.length) { MT.edit = false; MT.vals = {}; MT.msg = null; PF.render(); return; }
+  MT.busy = true; MT.msg = null; PF.render();
+  try {
+    const used = new Set(cap.adjRows);
+    for (const { mt, v } of novos) {
+      const key = 'meta|' + mt.k, cur = cap.adj.get(key + '#0');
+      let row = cur ? cur.row : null;
+      if (row == null) { for (let r = cap.adjRow0; r <= 109; r++) if (!used.has(r)) { row = r; break; } }
+      if (row == null) throw { code: 'tool_error', message: 'o espaço de ajustes da aba CONTAS A PAGAR está cheio' };
+      await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range: PF.CAP_SHEET + '!B' + row + ':D' + row, values: [[key, 0, v]] });
+      cap.adj.set(key + '#0', { v, row }); if (!used.has(row)) { used.add(row); cap.adjRows.push(row); }
+    }
+    MT.edit = false; MT.vals = {}; MT.msg = { t: 'good', h: 'Metas salvas.' };
+    PF.toast('Metas salvas');
+  } catch (err) { MT.msg = { t: 'bad', h: errMsg(err, true).h }; }
+  finally { MT.busy = false; refresh(); PF.render(); }
+}
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-act]'); if (!t || !PF.M) return;
+  const a = t.dataset.act; if (a.indexOf('mt-') !== 0) return;
+  if (a === 'mt-open') { MT.open = MT.open === t.dataset.v ? null : t.dataset.v; PF.render(); }
+  else if (a === 'mt-edit') { MT.edit = !MT.edit; MT.vals = {}; MT.msg = null; PF.render(); }
+  else if (a === 'mt-save') mtSave();
+});
+document.addEventListener('input', ev => { const el = ev.target; if (el && el.id && /^mt-\d+$/.test(el.id) && el.dataset.k) MT.vals[el.dataset.k] = el.value; });
+
 const AR = PF.AR = { open: null, edit: null, val: '', date: '', busy: null, msg: null };
 function arLista(M, m) {
   const k = m + 1, out = [];
