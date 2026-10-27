@@ -2528,8 +2528,8 @@ function formCompra(M, X) {
 }
 
 function formContas(M) {
-  const now = PF.nowIdx(), T = L.cMes != null ? L.cMes : now, C = contas(M, T);
-  let h = '<div class="lf-field"><span class="lf-lab">Mês das contas</span>' + PF.seg('l-cmes', [now - 1, now, now + 1].map(k => [String(k), PF.lab(k)]), String(T)) + '</div>';
+  const now = PF.nowIdx(), T = L.cMes != null ? L.cMes : now + 1, C = contas(M, T);   // conta que chega este mês vence no mês seguinte
+  let h = '<div class="lf-field"><span class="lf-lab">Mês das contas</span>' + PF.seg('l-cmes', [now, now + 1, now + 2].map(k => [String(k), 'Vence em ' + PF.lab(k)]), String(T)) + '</div>';
   if (!C.tpl.length) {
     h += PF.empty('Nenhuma conta variável nos últimos meses', 'Contas que mudam de valor (água, energia) aparecem aqui depois do primeiro lançamento como FIXO sem repetir.');
   } else {
@@ -2541,7 +2541,7 @@ function formContas(M) {
         (t.done != null ? '<div class="lc-done">Já lançada<br><b>' + PF.brl(t.done) + '</b></div>'
           : '<label class="lc-in"><span class="sr">' + esc(t.desc + ' de ' + t.resp) + '</span><input id="lc-' + i + '" data-k="' + esc(t.k) + '" inputmode="decimal" placeholder="0,00" autocomplete="off" value="' + esc(L.contas[t.k] || '') + '"><button type="button" class="lc-copy" data-act="l-copy" data-v="' + esc(t.k) + '" title="Usar o mesmo valor do mês anterior">' + (C.bm != null ? PF.lab(C.bm) + ': ' : 'antes: ') + PF.brl(t.last) + ' · repetir</button></label>') + '</div>';
     }).join('') + '</div>';
-    h += '<p class="lf-help">Entram com data 01/' + pad(PF.moOf(T) + 1) + '/' + PF.yOf(T) + ', no mês de ' + PF.lab(T) + '. Deixe em branco a conta que ainda não chegou.</p>';
+    h += '<p class="lf-help">Entram nas contas que vencem em ' + PF.MESL[PF.moOf(T)] + ' (tela Mês de ' + PF.MESL[PF.moOf(T - 1)] + '). Deixe em branco a conta que ainda não chegou.</p>';
     h += '<button type="button" class="btn primary lf-go" id="lc-go" data-act="l-contas"' + (L.busy || PF.mode !== 'live' || !n ? ' disabled' : '') + '>' + (L.busy ? 'Gravando…' : n ? 'Lançar ' + n + (n === 1 ? ' conta · ' : ' contas · ') + PF.brl(tot) : 'Preencha os valores') + '</button>';
   }
   if (C.auto.length) h += '<p class="lf-help lc-auto"><b>Já entram sozinhas em ' + PF.lab(T) + ':</b> ' + C.auto.map(r => esc(r.desc) + ' (' + esc(r.resp) + ')').join(', ') + '.</p>';
@@ -3157,7 +3157,7 @@ function saveCompra() {
   write([row], first => { L.f.val = ''; L.f.desc = ''; L.f.cat = ''; L.f.catAuto = false; L.f.parc = ''; L.f.pa = '1'; L.f.obs = ''; L.f.mesFat = ''; L.f.tipo = 'VARIÁVEL'; savePrefs(); if (cx) { L.f.date = ''; L.last.cx = cx; L.cxDone = { rows: cx, info: 'LANÇAMENTOS linha ' + first }; L.cxForm = null; } }).then(cxAfter);
 }
 function saveContas() {
-  const M = PF.M, T = L.cMes != null ? L.cMes : PF.nowIdx(), C = contas(M, T), d = firstBR(T);
+  const M = PF.M, T = L.cMes != null ? L.cMes : PF.nowIdx() + 1, C = contas(M, T), d = firstBR(T);
   const rows = [];
   for (const t of C.tpl) {
     if (t.done != null) continue;
@@ -3679,7 +3679,7 @@ document.addEventListener('click', e => {
     case 'l-contas': saveContas(); break;
     case 'l-undo': undo(); break;
     case 'l-copy': {
-      const C = contas(PF.M, L.cMes != null ? L.cMes : PF.nowIdx()), t = C.tpl.find(x => x.k === v);
+      const C = contas(PF.M, L.cMes != null ? L.cMes : PF.nowIdx() + 1), t = C.tpl.find(x => x.k === v);
       if (t) { L.contas[t.k] = nf2.format(t.last); PF.render(); }
       break;
     }
@@ -3697,7 +3697,7 @@ document.addEventListener('input', e => {
   else if (id === 'lf-obs') L.f.obs = el.value;
   else if (id.indexOf('lc-') === 0 && el.dataset.k) {
     L.contas[el.dataset.k] = el.value;
-    const M = PF.M, T = L.cMes != null ? L.cMes : PF.nowIdx(), C = contas(M, T);
+    const M = PF.M, T = L.cMes != null ? L.cMes : PF.nowIdx() + 1, C = contas(M, T);
     let n = 0, tot = 0; for (const t of C.tpl) { const x = valOf(L.contas[t.k]); if (t.done == null && x > 0) { n++; tot += x; } }
     const b = document.getElementById('lc-go');
     if (b) { b.disabled = L.busy || PF.mode !== 'live' || !n; b.textContent = n ? 'Lançar ' + n + (n === 1 ? ' conta · ' : ' contas · ') + PF.brl(tot) : 'Preencha os valores'; }
