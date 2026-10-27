@@ -628,6 +628,9 @@ body{font:400 14.5px/1.5 var(--f-body);letter-spacing:-.003em}
 .h-stats small{font-size:12px;color:var(--brand-dim);line-height:1.2}
 .h-stats b{font:700 16px/1.25 var(--f-display);letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .h-stats b .cur{font-size:.75em;font-weight:600;color:var(--brand-dim);margin-right:.25em}
+.h-stats>div{grid-template-rows:auto auto auto;align-content:start}
+.h-ic{grid-row:1 / span 3}
+.h-stats em{font:600 11.5px/1.3 var(--f-body);font-style:normal;color:color-mix(in srgb,var(--brand-ink) 86%,transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .nota{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:12px 14px;border-radius:16px;background:var(--surface-3);color:var(--ink-2);font-size:13px;line-height:1.45}
 .nota svg{flex:none;width:18px;height:18px;margin-top:1px;fill:none;stroke:var(--ink-3);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .nota b{color:var(--ink);font-weight:700}
@@ -697,6 +700,51 @@ body{font:400 14.5px/1.5 var(--f-body);letter-spacing:-.003em}
 .g-rec{--tint:var(--good-soft);--tint-ink:var(--good)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tx-ic{--tint:color-mix(in srgb,var(--tint-ink) 22%,var(--surface));--tint-ink:var(--ink)}}
 :root[data-theme="dark"] .tx-ic{--tint:color-mix(in srgb,var(--tint-ink) 22%,var(--surface));--tint-ink:var(--ink)}
+
+/* ---------- entradas: a receber / recebido ---------- */
+.rx-prog{margin:-4px 0 12px}
+.rx-leg{display:flex;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-3);font-weight:600}
+.rx-leg b{color:var(--ink);font-weight:700;margin-left:4px;font-variant-numeric:tabular-nums}
+.rx-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--surface-3);box-shadow:inset 0 0 0 1.5px var(--line);margin-right:6px;vertical-align:-.5px}
+.rx-leg i.ok{background:var(--good);box-shadow:none}
+.rx-prog .bar{height:8px;border-radius:99px;background:var(--surface-3);overflow:hidden;margin-top:8px}
+.rx-prog .bar i{display:block;height:100%;border-radius:99px;background:var(--good)}
+.tx.rx{cursor:pointer}
+.tx.rx .tx-v b{color:var(--ink-2)}
+.tx.rx.ok .tx-v b{color:var(--good)}
+.tx.rx .tx-v .pill{margin:0}
+.rx-nm{all:unset;cursor:pointer;display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-radius:4px}
+.rx-nm:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (hover:hover){.tx.rx:hover .rx-nm{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line)}}
+.btn.sm.rx-q{height:30px;padding:0 15px;background:var(--lime);border-color:var(--lime);color:var(--lime-ink);font-weight:700}
+.btn.sm.rx-q:disabled{opacity:.55}
+.rx-ed{margin:0 0 12px 54px;padding:14px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line-2);display:flex;flex-direction:column;gap:14px}
+.rx-f{display:flex;flex-direction:column;gap:7px;min-width:0}
+.rx-f>span{font:600 12.5px/1.2 var(--f-body);color:var(--ink-2)}
+.rx-money{display:flex;align-items:center;gap:8px;height:52px;padding:0 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.rx-money:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.rx-money i{font:600 15px var(--f-body);font-style:normal;color:var(--ink-3)}
+.rx-money input{flex:1;min-width:0;height:100%;border:0;background:transparent;font:800 24px/1 var(--f-display);letter-spacing:-.02em;color:var(--ink);outline:none;padding:0}
+.rx-st{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rx-st input[type=date]{height:38px;border:1px solid var(--line);border-radius:99px;background:var(--surface);color:var(--ink);padding:0 12px;font:600 13.5px var(--f-body);min-width:0}
+.rx-chk{display:flex;gap:9px;align-items:center;font-size:13px;color:var(--ink-2);font-weight:500;line-height:1.35;cursor:pointer}
+.rx-chk[hidden]{display:none}
+.rx-chk input{flex:none;width:18px;height:18px;margin:0;accent-color:var(--brand)}
+.rx-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rx-acts .sp{flex:1}
+.rx-del{all:unset;cursor:pointer;font:600 13px var(--f-body);color:var(--bad);padding:8px 4px;border-radius:6px}
+.rx-del:focus-visible{outline:2px solid var(--bad);outline-offset:2px}
+.rx-del:disabled{opacity:.5;cursor:default}
+.rx-ask{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:12px;background:var(--bad-soft);color:var(--ink);font-size:13px;line-height:1.45}
+.rx-ask b{font-weight:700}
+.btn.sm.rx-danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.rx-help{font-size:12px;color:var(--ink-3);line-height:1.45}
+.rx-hint{margin-top:10px;font-size:12px;color:var(--ink-3);line-height:1.45}
+.rx-ed .lf-msg,.rx-msg{margin:0;font-size:13px}
+.rx-msg{margin:0 0 10px 54px}
+.rx-due{margin-top:16px;border-color:color-mix(in srgb,var(--lime) 55%,var(--line-2));box-shadow:0 0 0 3px color-mix(in srgb,var(--lime) 22%,transparent),var(--shadow)}
+.rx-due .card-h{margin-bottom:8px}
+@media (max-width:560px){.rx-ed,.rx-msg{margin-left:0}}
 
 /* ---------- faturas ---------- */
 .fat-sum{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 20px;align-items:end}
@@ -858,7 +906,7 @@ PF.SHEET_URL = 'https://docs.google.com/spreadsheets/d/' + PF.SHEET_ID + '/edit'
 PF.GID = { led: 1008, rec: 1009, cad: 1010, aud: 1011, pag: 1013, cap: 1015 };
 PF.RANGES = {
   led: "'LANÇAMENTOS'!A1:V",
-  rec: "'RECEITAS'!A1:K",
+  rec: "'RECEITAS'!A1:L",
   cad: "'CADASTROS'!A1:Q60",
   pag: "'PAGAMENTOS'!A1:G",
   aud: "'AUDITORIA'!A1:G60",
@@ -960,7 +1008,7 @@ function parseLed(raw) {
   }
   return out;
 }
-const REC_SPEC = { mes: ['MES INICIO'], desc: ['DESCRICAO'], resp: ['RESPONSAVEL UNIDADE'], tipo: ['TIPO DE RECEITA'], val: ['VALOR R'], repete: ['REPETE'], obs: ['OBSERVACAO'], ini: ['INDICE INICIO'], fim: ['INDICE FIM'], dia: ['DIA QUE ENTRA'] };
+const REC_SPEC = { mes: ['MES INICIO'], desc: ['DESCRICAO'], resp: ['RESPONSAVEL UNIDADE'], tipo: ['TIPO DE RECEITA'], val: ['VALOR R'], repete: ['REPETE'], obs: ['OBSERVACAO'], ini: ['INDICE INICIO'], fim: ['INDICE FIM'], dia: ['DIA QUE ENTRA'], receb: ['RECEBIDO EM'] };
 function parseRec(raw) {
   const t = tableOf(raw); if (!t.length) return [];
   const H = headerMap(t[0], REC_SPEC), out = [];
@@ -970,8 +1018,8 @@ function parseRec(raw) {
     const desc = str(g('desc')), val = pNum(g('val'));
     if (!desc && val == null) continue;
     const ini = pNum(g('ini')), fim = pNum(g('fim'));
-    const dia = pNum(g('dia'));
-    out.push({ row: i + 1, desc, resp: str(g('resp')), tipo: str(g('tipo')), val: val || 0, repete: str(g('repete')), obs: str(g('obs')), ini, fim: fim == null ? ini : fim, dia: dia >= 1 && dia <= 31 ? Math.round(dia) : null });
+    const dia = pNum(g('dia')), rb = H.receb >= 0 ? str(g('receb')) : '';
+    out.push({ row: i + 1, desc, resp: str(g('resp')), tipo: str(g('tipo')), val: val || 0, repete: str(g('repete')), obs: str(g('obs')), ini, fim: fim == null ? ini : fim, dia: dia >= 1 && dia <= 31 ? Math.round(dia) : null, receb: pDate(rb), recebTxt: rb });
   }
   return out;
 }
@@ -2735,9 +2783,11 @@ const SVG_INFO = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy
 V.mes = function (M) {
   const S = PF.S, m = S.m;
   S.ledPred = null; S.ledList = true;
+  const ae = document.activeElement;
+  const keep = ae && ae.id && /^rx-/.test(ae.id) ? { id: ae.id, s: ae.selectionStart, e: ae.selectionEnd } : null;
   const rows = PF.ciclo(M, m), cas = rows.filter(DO_CASAL), outros = rows.filter(r => !DO_CASAL(r));
-  const recs = PF.recAt(M, m, ['Renda pessoal', 'Outras receitas']);
-  const entrou = PF.sum(recs, x => x.val), gastou = PF.sum(cas), sobrou = entrou - gastou, tot = PF.sum(rows);
+  const ents = PF.entradas(M, m), aReceber = PF.sum(ents.filter(e => !e.ok), e => e.val);
+  const entrou = PF.sum(ents, e => e.val), gastou = PF.sum(cas), sobrou = entrou - gastou, tot = PF.sum(rows);
   const mesN = PF.MESL[PF.moOf(m)], prox = PF.MESL[PF.moOf(m + 1)];
   const scale = Math.max(entrou, gastou, 0.01), pIn = Math.min(entrou, gastou) / scale * 100;
   let meter;
@@ -2747,11 +2797,14 @@ V.mes = function (M) {
   let h = '<section class="hero" aria-label="Resumo de ' + mesN + '">' +
     '<p class="h-lab">' + (sobrou < -0.005 ? 'Faltou em ' : 'Sobrou em ') + mesN + '</p>' +
     '<p class="h-val ' + (sobrou < -0.005 ? 'neg' : 'pos') + '">' + money2(sobrou) + '</p>' +
-    '<div class="meter" role="img" aria-label="' + (pct == null ? 'Nada entrou ainda' : 'Gastos de vocês: ' + pct + '% do que entrou') + '">' + meter + '</div>' +
-    '<p class="h-meter">' + (pct == null ? 'Ainda não entrou dinheiro em ' + mesN + '.' : 'Os gastos de vocês foram <b>' + pct + '%</b> do que entrou.') + '</p>' +
-    '<div class="h-stats"><div><span class="h-ic in">' + SVG_IN + '</span><small>Entrou</small><b>' + money2(entrou) + '</b></div>' +
+    '<div class="meter" role="img" aria-label="' + (pct == null ? 'Ainda não há entradas' : 'Gastos de vocês: ' + pct + '% das entradas') + '">' + meter + '</div>' +
+    '<p class="h-meter">' + (pct == null ? 'Ainda não há entradas em ' + mesN + '.' : 'Os gastos de vocês foram <b>' + pct + '%</b> das entradas do mês.') + '</p>' +
+    '<div class="h-stats"><div><span class="h-ic in">' + SVG_IN + '</span><small>Entradas</small><b>' + money2(entrou) + '</b>' +
+    (aReceber > 0.005 ? '<em>' + PF.brl(aReceber) + ' a receber</em>' : entrou > 0.005 ? '<em>tudo recebido</em>' : '') + '</div>' +
     '<div><span class="h-ic out">' + SVG_OUT + '</span><small>Gastos de vocês</small><b>' + money2(gastou) + '</b></div></div></section>';
   if (outros.length) h += '<p class="nota">' + SVG_INFO + '<span>Família e negócios usaram <b>' + PF.brl(PF.sum(outros)) + '</b> dos cartões de vocês. Esse valor aparece na lista, mas fica fora da conta acima porque eles devolvem.</span></p>';
+  RX.seen = new Set();
+  h += rxDue(M, m);
 
   const dim = S.mesDim || 'resp';
   const items = dim === 'card' ? PF.groupSum(rows, r => r.card).map(([k, v]) => ({ key: k, label: PF.nomeConta(k), value: v, color: cardColor(k) }))
@@ -2760,14 +2813,17 @@ V.mes = function (M) {
   const brk = '<section class="card brk"><header class="card-h"><h2>Para onde foi</h2>' + PF.seg('mesdim', [['resp', 'Pessoa'], ['card', 'Cartão'], ['cat', 'Categoria']], dim) + '</header>' +
     PF.bars(items, { total: tot, act: dim === 'card' ? 'f-card' : dim === 'cat' ? 'f-cat' : 'f-resp', totalRow: 1, emptyMsg: 'Nada lançado para ' + mesN + '.' }) + '</section>';
 
-  const recTipo = t => t === 'Outras receitas' ? 'renda extra' : 'salário';
-  const recRows = recs.slice().sort((a, b) => b.val - a.val).map(x => '<div class="tx"><span class="tx-ic g-rec">' + PF.svg('rec') + '</span><span class="tx-m"><b>' + esc(x.desc) + '</b><small><i class="dot" style="background:' + PF.respColor(M, x.resp) + '"></i>' + esc(PF.nome(x.resp)) + ', ' + recTipo(x.tipo) + '</small></span><span class="tx-v in"><b>+' + money2(x.val) + '</b></span>' + sheetLnk(PF.GID.rec, x.row) + '</div>').join('');
-  const rec = '<section class="card rec"><header class="card-h"><div><h2>O que entrou</h2><p class="sub">Salários e rendas extras de ' + mesN + ', da aba RECEITAS.</p></div></header>' +
-    (recs.length ? '<div class="tx-list">' + recRows + '</div><div class="tx-foot"><span>Total que entrou</span><b>' + money2(entrou) + '</b></div>' : PF.empty('Nada entrou ainda', 'Para registrar um valor recebido, toque no + e escolha Renda extra.')) + '</section>';
-
+  const rec = rxCard(M, m);
   const lst = PF.ledPanel(M, 'Lançamentos', { list: 1, sub: 'Faturas que vencem em ' + prox + ', contas de ' + prox + ' e Pix e débito de ' + mesN + '.' });
-  h += '<div class="mes-grid">' + brk + lst + rec + '</div>';
-  return { title: saudacao(), sub: nomesCasal(M), html: h };
+  h += '<div class="mes-grid">' + brk + rec + lst + '</div>';
+  return {
+    title: saudacao(), sub: nomesCasal(M), html: h,
+    after: () => {
+      if (!keep) return;
+      const el = document.getElementById(keep.id); if (!el) return;
+      try { el.focus({ preventScroll: true }); if (keep.s != null && el.setSelectionRange) el.setSelectionRange(keep.s, keep.e); } catch (er) { }
+    }
+  };
 };
 
 /* ============================================================
@@ -2925,14 +2981,19 @@ async function undo() {
 }
 
 /* ---------- gravação da renda extra ---------- */
-async function nextRecRow() {
-  const res = await PF.mcp.callTool(PF.SERVER, READ, { spreadsheetId: PF.SHEET_ID, range: "'RECEITAS'!A1:K" }, { cache: { refresh: true } });
+const REC_A1 = (a, b) => "'RECEITAS'!" + a + (b ? ':' + b : '');
+async function readRec() {   // aba RECEITAS lida agora, sem cache
+  const res = await PF.mcp.callTool(PF.SERVER, READ, { spreadsheetId: PF.SHEET_ID, range: "'RECEITAS'!A1:L" }, { cache: { refresh: true } });
   const p = payloadOf(res);
   if (!p || (p.values != null && !Array.isArray(p.values))) throw { code: 'bad_payload' };
+  return p.values || [];
+}
+function freeRecRow(vals) {   // primeira linha livre depois da última usada (I e J são fórmulas e não contam)
   let last = 0;
-  (p.values || []).forEach((r, i) => { if (Array.isArray(r) && r.some((c, j) => j !== 8 && j !== 9 && String(c == null ? '' : c).trim() !== '')) last = i; });
+  vals.forEach((r, i) => { if (Array.isArray(r) && r.some((c, j) => j !== 8 && j !== 9 && String(c == null ? '' : c).trim() !== '')) last = i; });
   return last + 2;
 }
+async function nextRecRow() { return freeRecRow(await readRec()); }
 async function saveExtra() {
   const M = PF.M, x = L.x; if (!M || L.busy) return;
   const fail = h => { L.msg = { t: 'bad', h }; PF.render(); };
@@ -2949,8 +3010,9 @@ async function saveExtra() {
   try {
     const row = await nextRecRow();
     await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range: "'RECEITAS'!A" + row + ':H' + row, values: [[dbr, desc, x.resp, 'Outras receitas', v, 'Não', '', obs]] });
-    M.rec.push({ row, desc, resp: x.resp, tipo: 'Outras receitas', val: v, repete: 'Não', obs, ini: k, fim: k, dia: null });
+    M.rec.push({ row, desc, resp: x.resp, tipo: 'Outras receitas', val: v, repete: 'Não', obs, ini: k, fim: k, dia: null, receb: PF.pDate(dbr), recebTxt: dbr });
     M._met = new Map();
+    try { await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range: REC_A1('L' + row), values: [[dbr]] }); } catch (e1) { }   // RECEBIDO EM (a renda extra já entra como recebida)
     let bumped = false, sx = '';
     if (brad && PF.bumpSaldo && M.cap && M.cap.saldoSet) {
       try { await PF.bumpSaldo(v); bumped = true; sx = ' Saldo do Bradesco no painel: ' + PF.brl(M.cap.saldo) + '.'; }
@@ -2980,6 +3042,7 @@ async function undoExtra() {
     if (!same) { L.msg = { t: 'warn', h: 'Essa linha mudou depois do lançamento. Para apagar, abra a linha ' + l.row + ' da aba RECEITAS.' }; return; }
     await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range, values: [['', '', '', '', '', '', '', '']] });
     M.rec = M.rec.filter(x => x.row !== l.row); M._met = new Map();
+    try { await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range: REC_A1('L' + l.row), values: [['']] }); } catch (e1) { }
     if (l.bumped && PF.bumpSaldo) { try { await PF.bumpSaldo(-l.v); } catch (e) { } }
     if (l.cx) { try { await cxMark(l.cx, 'novo', ''); } catch (e) { } }
     L.xlast = null; L.msg = { t: 'info', h: 'Renda extra desfeita.' };
@@ -2987,6 +3050,267 @@ async function undoExtra() {
     L.msg = errMsg(err, true);
   } finally { L.busy = false; refresh(); PF.render(); }
 }
+
+/* ============================================================
+   ENTRADAS DO MÊS (aba RECEITAS): a receber ou recebido, e ajuste do valor
+   - Cada salário (Renda pessoal) tem uma linha por mês. A linha mais nova de cada salário fica "Todo mês" sem fim
+     e vale para os meses seguintes: eles aparecem com o mesmo valor, como a receber, e ganham a própria linha
+     quando alguém marca Recebi ou ajusta o valor daquele mês.
+   - RECEBIDO EM (coluna L) vale só para o mês da própria linha. Em branco = a receber.
+   - Renda extra (Outras receitas) é lançada quando o dinheiro cai, então já conta como recebida.
+   ============================================================ */
+const SAL = 'Renda pessoal', EXTRA = 'Outras receitas';
+const salKey = x => PF.norm(x.desc) + '|' + PF.norm(x.resp);
+const nomeRec = s => String(s || '').split(' ').map(w => /^[A-ZÀ-Ý]{4,}$/.test(w) ? PF.nome(w) : w).join(' ');   // "Salário ADVANIA" → "Salário Advânia"
+const brOf = d => d ? pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() : '';
+const isoOfD = d => d ? d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) : '';
+function recebDe(x) {
+  if (x.receb) return x.receb;
+  if (x.tipo === EXTRA) { const mm = /recebida em (\d{2}\/\d{2}\/\d{4})/i.exec(x.obs || ''); if (mm) return PF.pDate(mm[1]); }
+  return null;
+}
+function entradas(M, m) {
+  const all = PF.recAt(M, m, [SAL, EXTRA]), bySal = new Map(), keep = new Set();
+  for (const x of all) if (x.tipo === SAL) { const k = salKey(x); if (!bySal.has(k)) bySal.set(k, []); bySal.get(k).push(x); }
+  /* se uma gravação parou no meio, o mesmo salário pode ter duas linhas valendo no mês: fica a do próprio mês (ou a mais nova) */
+  for (const xs of bySal.values()) {
+    const own = xs.filter(x => x.ini === m);
+    if (own.length) own.forEach(x => keep.add(x));
+    else keep.add(xs.reduce((a, b) => (b.ini > a.ini || (b.ini === a.ini && b.row > a.row)) ? b : a));
+  }
+  const out = [];
+  for (const x of all) {
+    const sal = x.tipo === SAL;
+    if (sal && !keep.has(x)) continue;
+    const own = x.ini === m;
+    out.push({ x, m, sal, own, val: x.val, ok: sal ? own && !!(x.receb || x.recebTxt) : true, em: own ? recebDe(x) : null, key: (own ? 'r' : 'p') + x.row + '-' + m });
+  }
+  return out.sort((a, b) => (b.sal - a.sal) || (a.sal ? b.val - a.val : ((b.em ? +b.em : 0) - (a.em ? +a.em : 0)) || b.x.row - a.x.row));
+}
+PF.entradas = entradas;
+
+/* plano de gravação: cada passo grava um pedaço da aba e, se der certo, atualiza o modelo local na hora */
+function rxPlan(M, e, o, free, vals) {
+  const R = e.x, p = e.m, steps = [], today = brOf(new Date());
+  const step = (range, values, apply) => steps.push({ range, values, apply });
+  const same = (row, x) => { const v = vals[row - 1] || []; return PF.norm(v[1]) === PF.norm(x.desc) && PF.norm(v[2]) === PF.norm(x.resp) && PF.norm(v[3]) === PF.norm(x.tipo); };
+  const clear = x => {
+    step(REC_A1('A' + x.row, 'H' + x.row), [['', '', '', '', '', '', '', '']], () => { M.rec = M.rec.filter(y => y !== x); });
+    if (x.dia || x.recebTxt) step(REC_A1('K' + x.row, 'L' + x.row), [['', '']], null);
+  };
+  const close = (x, k) => step(REC_A1('F' + x.row, 'G' + x.row), [['Todo mês', firstBR(k)]], () => { x.repete = 'Todo mês'; x.fim = k; });
+  const add = (row, k, val, fim, obs, receb) => {
+    const nx = { row, desc: R.desc, resp: R.resp, tipo: SAL, val, repete: 'Todo mês', obs, ini: k, fim, dia: R.dia, receb: receb ? PF.pDate(receb) : null, recebTxt: receb || '' };
+    step(REC_A1('A' + row, 'H' + row), [[firstBR(k), R.desc, R.resp, SAL, val, 'Todo mês', fim >= 99999 ? '' : firstBR(fim), obs]], () => { M.rec.push(nx); });
+    if (R.dia || receb) step(REC_A1('K' + row, 'L' + row), [[R.dia || '', receb || '']], null);
+  };
+  const changed = o.val != null && Math.abs(o.val - R.val) > 0.005;
+
+  if (!e.sal) {   // renda extra: uma linha só
+    if (o.del) clear(R);
+    else if (changed) step(REC_A1('E' + R.row), [[o.val]], () => { R.val = o.val; });
+    return steps;
+  }
+  /* outras linhas do mesmo salário: as que começam depois do mês e as que ainda cobrem o mês (sobra de gravação interrompida) */
+  const sib = M.rec.filter(x => x !== R && x.tipo === SAL && salKey(x) === salKey(R) && same(x.row, x));
+  if (o.stop) {   // parou de entrar: sai deste mês em diante, o passado fica como está
+    if (R.ini >= p) clear(R); else close(R, p - 1);
+    sib.forEach(x => { if (x.ini >= p) clear(x); else if (x.fim >= p) close(x, p - 1); });
+    return steps;
+  }
+  const split = changed && !o.fwd && R.fim > p;   // valor só deste mês: os meses seguintes continuam com o valor antigo
+  const hasNext = sib.some(x => x.ini === p + 1);
+  if (e.own) {
+    if (split) {
+      if (!hasNext) add(free, p + 1, R.val, R.fim, 'Valor previsto a partir de ' + PF.lab(p + 1) + '. Linha criada pelo app em ' + today + '.');
+      step(REC_A1('E' + R.row, 'G' + R.row), [[o.val, 'Todo mês', firstBR(p)]], () => { R.val = o.val; R.repete = 'Todo mês'; R.fim = p; });
+    } else if (changed) step(REC_A1('E' + R.row), [[o.val]], () => { R.val = o.val; });
+    if (o.receb != null) step(REC_A1('L' + R.row), [[o.receb]], () => { R.receb = PF.pDate(o.receb); R.recebTxt = o.receb; });
+  } else {
+    /* mês ainda sem linha própria: cria a linha do mês e fecha a linha anterior no mês de antes */
+    const nv = changed ? o.val : R.val;
+    add(free, p, nv, split || hasNext ? p : R.fim, 'Salário de ' + PF.lab(p) + '. Linha criada pelo app em ' + today + '.', o.receb || '');
+    if (split && !hasNext) add(free + 1, p + 1, R.val, R.fim, 'Valor previsto a partir de ' + PF.lab(p + 1) + '. Linha criada pelo app em ' + today + '.');
+    close(R, p - 1);
+  }
+  sib.forEach(x => { if (x.ini < p && x.fim >= p) close(x, p - 1); });
+  return steps;
+}
+PF.rxPlan = rxPlan;
+
+const RX = PF.RX = { open: null, val: '', val0: 0, st: 'a', st0: 'a', date: '', date0: '', fwd: false, ask: false, busy: null, msg: null };
+function rxFind(key) {
+  const M = PF.M, m = +String(key || '').split('-')[1];
+  return M && isFinite(m) ? entradas(M, m).find(e => e.key === key) || null : null;
+}
+function rxOpen(key) {
+  if (RX.busy) return;
+  if (RX.open === key) { RX.open = null; RX.msg = null; PF.render(); return; }
+  const e = rxFind(key); if (!e) return;
+  Object.assign(RX, { open: key, val: nf2.format(e.val), val0: e.val, st: e.ok ? 'r' : 'a', date: isoOfD(e.em) || isoToday(), fwd: false, ask: false, msg: null });
+  RX.st0 = RX.st; RX.date0 = RX.date;
+  PF.render();
+  const el = document.getElementById('rx-val'); if (el && !matchMedia('(hover: none)').matches) try { el.focus({ preventScroll: true }); el.select(); } catch (er) { }
+}
+async function rxRun(e, o, ok) {
+  const M = PF.M;
+  if (!PF.mcp || PF.mode !== 'live') { RX.msg = { key: e.key, t: 'bad', h: 'Nos dados de exemplo nada é gravado.' }; PF.render(); return; }
+  RX.busy = e.key; RX.msg = null; PF.render();
+  let done = 0, steps = [];
+  try {
+    const vals = await readRec(), v = vals[e.x.row - 1] || [];
+    if (PF.norm(v[1]) !== PF.norm(e.x.desc) || PF.norm(v[2]) !== PF.norm(e.x.resp) || PF.norm(v[3]) !== PF.norm(e.x.tipo)) throw { code: 'moved' };
+    steps = rxPlan(M, e, o, freeRecRow(vals), vals);
+    for (const s of steps) {
+      await PF.mcp.callTool(PF.SERVER, WRITE, { spreadsheetId: PF.SHEET_ID, range: s.range, values: s.values });
+      if (s.apply) s.apply();
+      done++;
+    }
+    RX.open = null; RX.ask = false;
+    if (ok) PF.toast(ok);
+  } catch (err) {
+    const c = err && err.code;
+    RX.msg = { key: e.key, t: c === 'moved' ? 'warn' : 'bad', h: c === 'moved' ? 'Essa linha mudou na planilha. Toque em Atualizar e tente de novo.'
+      : done ? 'Gravei só uma parte. Toque em Atualizar e confira esta entrada antes de tentar de novo.'
+      : ['server_unavailable', 'upstream_error', 'cancelled', 'rate_limited'].indexOf(c) >= 0 ? 'A planilha não respondeu. Toque em Atualizar e confira antes de tentar de novo.' : errMsg(err, true).h };
+  } finally {
+    M._met = new Map();
+    RX.busy = null; refresh(); PF.render();
+  }
+}
+function rxSave(key, quick) {
+  if (RX.busy) return;
+  const e = rxFind(key); if (!e) { RX.open = null; PF.render(); return; }
+  const fail = h => { RX.msg = { key, t: 'bad', h }; PF.render(); };
+  if (quick) return rxRun(e, { val: e.val, receb: brOf(new Date()) }, 'Recebido: ' + nomeRec(e.x.desc));
+  const v = valOf(RX.val);
+  if (v == null || v < 0 || (!e.sal && v === 0)) return fail(e.sal ? 'Digite o valor (ex.: 800,00).' : 'Digite o valor. Para tirar esta renda extra, toque em Apagar.');
+  const o = { val: v, fwd: RX.fwd };
+  if (e.sal) {
+    if (RX.st === 'r') {
+      const d = isoToBR(RX.date); if (!d) return fail('Escolha o dia em que caiu na conta.');
+      if (RX.st0 !== 'r' || RX.date !== RX.date0) o.receb = d;
+    } else if (RX.st0 === 'r') o.receb = '';
+  }
+  if (Math.abs(v - e.val) <= 0.005 && o.receb == null) { RX.open = null; PF.render(); return; }   // nada mudou
+  return rxRun(e, o, o.receb ? 'Recebido: ' + nomeRec(e.x.desc) : o.receb === '' ? 'Voltou para a receber' : 'Valor ajustado');
+}
+function rxStop(key) {
+  const e = rxFind(key); if (!e || RX.busy) return;
+  return rxRun(e, e.sal ? { stop: true } : { del: true }, e.sal ? nomeRec(e.x.desc) + ' saiu de ' + PF.MESL[PF.moOf(e.m)] + ' em diante' : 'Renda extra apagada');
+}
+
+/* ---------- tela: linhas, editor e cartões ---------- */
+function rxRow(M, e) {
+  const x = e.x, open = RX.open === e.key, busy = RX.busy === e.key, due = !e.ok && e.m < PF.nowIdx();
+  if (RX.seen) RX.seen.add(e.key);
+  const st = busy ? '<span class="pill">Gravando…</span>'
+    : e.ok ? '<span class="pill good">' + (e.em ? 'Recebido ' + dmy(e.em) : 'Recebido') + '</span>'
+    : due ? '<button type="button" class="btn sm rx-q" data-act="rx-quick" data-v="' + e.key + '"' + (RX.busy ? ' disabled' : '') + ' aria-label="Marcar ' + esc(nomeRec(x.desc)) + ' como recebido hoje">Recebi</button>'
+    : '<span class="pill">A receber</span>';
+  let h = '<div class="tx rx' + (e.ok ? ' ok' : '') + (open ? ' on' : '') + '" data-act="rx-open" data-v="' + e.key + '">' +
+    '<span class="tx-ic g-rec">' + PF.svg('rec') + '</span>' +
+    '<span class="tx-m"><b><button type="button" class="rx-nm" data-act="rx-open" data-v="' + e.key + '" aria-expanded="' + open + '">' + esc(nomeRec(x.desc)) + '</button></b>' +
+    '<small><i class="dot" style="background:' + PF.respColor(M, x.resp) + '"></i>' + esc(PF.nome(x.resp)) + ', ' + (e.sal ? 'salário' : 'renda extra') + '</small></span>' +
+    '<span class="tx-v' + (e.ok ? ' in' : '') + '"><b>' + (e.ok ? '+' : '') + money2(e.val) + '</b>' + st + '</span>' +
+    (e.own ? sheetLnk(PF.GID.rec, x.row) : '') + '</div>';
+  if (open) return h + rxEditor(e);
+  return RX.msg && RX.msg.key === e.key ? h + '<div class="lf-msg ' + RX.msg.t + ' rx-msg" role="alert"><span>' + RX.msg.h + '</span></div>' : h;
+}
+function rxEditor(e) {
+  const x = e.x, mes = PF.MESL[PF.moOf(e.m)], busy = !!RX.busy, dis = busy ? ' disabled' : '';
+  const canFwd = e.sal && x.fim > e.m, v = valOf(RX.val), differs = v != null && Math.abs(v - e.val) > 0.005;
+  let h = '<div class="rx-ed" role="group" aria-label="Ajustar ' + esc(nomeRec(x.desc)) + '">' +
+    '<label class="rx-f"><span>' + (e.sal ? 'Valor de ' + mes : 'Valor recebido') + '</span><span class="rx-money"><i>R$</i><input id="rx-val" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(RX.val) + '"' + dis + '></span></label>';
+  if (e.sal) {
+    h += '<div class="rx-f"><span>Já caiu na conta?</span><div class="rx-st">' + PF.seg('rx-st', [['a', 'Ainda não'], ['r', 'Sim, caiu']], RX.st) +
+      (RX.st === 'r' ? '<input type="date" id="rx-date" value="' + esc(RX.date) + '" aria-label="Dia em que caiu na conta"' + dis + '>' : '') + '</div></div>';
+    if (canFwd) h += '<label class="rx-chk" id="rx-fwdw"' + (differs ? '' : ' hidden') + '><input type="checkbox" id="rx-fwd"' + (RX.fwd ? ' checked' : '') + dis + '><span>Usar este valor nos próximos meses também</span></label>';
+  }
+  if (RX.ask) {
+    h += '<div class="rx-ask"><span>' + (e.sal ? 'Tirar <b>' + esc(nomeRec(x.desc)) + '</b> de ' + mes + ' em diante? Os meses anteriores ficam como estão.' : 'Apagar <b>' + esc(nomeRec(x.desc)) + '</b> (' + PF.brl(e.val) + ') da aba RECEITAS?') + '</span>' +
+      '<div class="rx-acts"><button type="button" class="btn sm rx-danger" data-act="rx-stop-yes" data-v="' + e.key + '"' + dis + '>' + (RX.busy === e.key ? 'Gravando…' : e.sal ? 'Sim, tirar' : 'Sim, apagar') + '</button><button type="button" class="btn sm" data-act="rx-stop-no"' + dis + '>Voltar</button></div></div>';
+  } else {
+    h += '<div class="rx-acts"><button type="button" class="btn primary" data-act="rx-save" data-v="' + e.key + '"' + dis + '>' + (RX.busy === e.key ? 'Gravando…' : 'Salvar') + '</button>' +
+      '<button type="button" class="btn" data-act="rx-close"' + dis + '>Cancelar</button><span class="sp"></span>' +
+      '<button type="button" class="rx-del" data-act="rx-stop"' + dis + '>' + (e.sal ? 'Parou de entrar' : 'Apagar') + '</button></div>';
+  }
+  h += '<p class="rx-help" id="rx-help">' + rxHelp(e) + '</p>';
+  if (RX.msg && RX.msg.key === e.key) h += '<div class="lf-msg ' + RX.msg.t + '" role="alert"><span>' + RX.msg.h + '</span></div>';
+  return h + '</div>';
+}
+function rxHelp(e) {
+  const mes = PF.MESL[PF.moOf(e.m)], v = valOf(RX.val), differs = v != null && Math.abs(v - e.val) > 0.005;
+  if (!e.sal) return 'Renda extra de ' + mes + (e.em ? ', recebida em ' + brOf(e.em) : '') + '. Grava na aba RECEITAS, linha ' + e.x.row + '.';
+  if (differs && RX.fwd && e.x.fim > e.m) return 'O novo valor vale para ' + mes + ' e para os próximos meses.';
+  return differs ? 'O novo valor vale só para ' + mes + '. Os próximos meses continuam com ' + PF.brl(e.val) + '.' : 'Ajuste o valor se caiu diferente. Vale só para ' + mes + '.';
+}
+function rxWhen(E, m) {   // quando os salários do mês caem: pelo DIA QUE ENTRA, ou no começo do mês seguinte
+  const dias = [...new Set(E.filter(e => e.sal && !e.ok).map(e => e.x.dia || 0))], prox = PF.MESL[PF.moOf(m + 1)];
+  return dias.length === 1 && dias[0] ? 'dia ' + dias[0] + ' de ' + prox : 'no começo de ' + prox;
+}
+function rxCard(M, m) {
+  const E = entradas(M, m), mesN = PF.MESL[PF.moOf(m)], now = PF.nowIdx();
+  const tot = PF.sum(E, e => e.val), got = PF.sum(E.filter(e => e.ok), e => e.val), wait = Math.max(0, tot - got);
+  const pend = E.filter(e => e.sal && !e.ok);
+  const sub = !E.length ? 'Salários e rendas extras de ' + mesN + ', da aba RECEITAS.'
+    : pend.length ? (m < now ? 'Os salários de ' + mesN + ' já deviam ter caído. Toque em Recebi quando cair na conta.' : 'Os salários de ' + mesN + ' caem ' + rxWhen(E, m) + '.')
+    : 'Tudo o que era de ' + mesN + ' já caiu na conta.';
+  let h = '<section class="card rec" id="recCard"><header class="card-h"><div><h2>Entradas de ' + mesN + '</h2><p class="sub">' + sub + '</p></div></header>';
+  if (!E.length) return h + PF.empty('Nada entrou ainda', 'Para registrar um valor recebido, toque no + e escolha Renda extra.') + '</section>';
+  if (tot > 0.005) h += '<div class="rx-prog"><div class="rx-leg"><span><i class="ok"></i>Recebido <b>' + PF.brl(got) + '</b></span><span><i></i>A receber <b>' + PF.brl(wait) + '</b></span></div>' +
+    '<div class="bar" role="img" aria-label="Recebido ' + PF.brl(got) + ' de ' + PF.brl(tot) + '"><i style="width:' + (got / tot * 100).toFixed(1) + '%"></i></div></div>';
+  h += '<div class="tx-list">' + E.map(e => rxRow(M, e)).join('') + '</div>' +
+    '<div class="tx-foot"><span>Total de entradas</span><b>' + money2(tot) + '</b></div>' +
+    '<p class="rx-hint">Toque numa entrada para ajustar o valor' + (E.some(e => e.sal) ? ' ou marcar quando o salário cair' : '') + '.</p>';
+  /* aviso de uma gravação cuja linha mudou de lugar (ex.: o mês ganhou linha própria antes do erro) */
+  if (RX.msg && RX.seen && !RX.seen.has(RX.msg.key)) h += '<div class="lf-msg ' + RX.msg.t + '" role="alert" style="margin-top:10px"><span>' + RX.msg.h + '</span></div>';
+  return h + '</section>';
+}
+function rxDue(M, m) {   // no mês atual: salários do mês anterior que ainda não foram marcados
+  if (m !== PF.nowIdx()) return '';
+  const k = m - 1, E = entradas(M, k).filter(e => e.sal && !e.ok);
+  if (!E.length) return '';
+  const mes = PF.MESL[PF.moOf(k)];
+  return '<section class="card rx-due" aria-label="Salários de ' + mes + ' a receber"><header class="card-h"><div><h2>Os salários de ' + mes + ' caíram?</h2>' +
+    '<p class="sub">Toque em Recebi quando cair na conta. Se veio outro valor, toque no nome para ajustar.</p></div></header>' +
+    '<div class="tx-list">' + E.map(e => rxRow(M, e)).join('') + '</div></section>';
+}
+
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-act]'); if (!t || !PF.M) return;
+  const a = t.dataset.act, v = t.dataset.v;
+  if (a.indexOf('rx-') !== 0) return;
+  if (a === 'rx-open' && ev.target.closest('a,input,label')) return;
+  switch (a) {
+    case 'rx-open': rxOpen(v); break;
+    case 'rx-close': RX.open = null; RX.ask = false; RX.msg = null; PF.render(); break;
+    case 'rx-st': RX.st = v; if (v === 'r' && !RX.date) RX.date = isoToday(); PF.render(); break;
+    case 'rx-save': rxSave(v); break;
+    case 'rx-quick': rxSave(v, true); break;
+    case 'rx-stop': RX.ask = true; RX.msg = null; PF.render(); break;
+    case 'rx-stop-no': RX.ask = false; PF.render(); break;
+    case 'rx-stop-yes': rxStop(v); break;
+  }
+});
+document.addEventListener('input', ev => {
+  const el = ev.target; if (!el || !el.id) return;
+  if (el.id === 'rx-val') {
+    RX.val = el.value;
+    const e = rxFind(RX.open), w = document.getElementById('rx-fwdw'), hp = document.getElementById('rx-help');
+    if (e && w) { const v = valOf(el.value); w.hidden = !(v != null && Math.abs(v - e.val) > 0.005); }
+    if (e && hp) hp.textContent = rxHelp(e);
+  } else if (el.id === 'rx-date') RX.date = el.value;
+});
+document.addEventListener('change', ev => {
+  const el = ev.target; if (!el || !el.id) return;
+  if (el.id === 'rx-fwd') { RX.fwd = !!el.checked; const e = rxFind(RX.open), hp = document.getElementById('rx-help'); if (e && hp) hp.textContent = rxHelp(e); }
+  else if (el.id === 'rx-date') RX.date = el.value;
+});
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'Enter' && ev.target && ev.target.id === 'rx-val' && RX.open) { ev.preventDefault(); rxSave(RX.open); }
+  else if (ev.key === 'Escape' && RX.open && !RX.busy) { RX.open = null; RX.ask = false; PF.render(); }
+});
 
 /* ---------- eventos ---------- */
 function suggest() {
