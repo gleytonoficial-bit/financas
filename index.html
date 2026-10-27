@@ -789,6 +789,12 @@ details.fat>summary .fv .btn{margin:0}
 .ft-now .lnk{all:unset;cursor:pointer;color:var(--accent);font-weight:700;text-decoration:underline;text-underline-offset:2px}
 .ft-now .lnk:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
 .ft-conta .tx-v{gap:5px}
+details.fat>summary .fv .fv-de{margin-top:-3px;font-size:12px;font-weight:600;color:var(--ink-3);white-space:nowrap}
+.tx-foot.sub{padding-top:10px}
+.tx-foot.sub span{font-weight:500;color:var(--ink-3)}
+.tx-foot.sub b{font-size:14.5px;font-weight:700;color:var(--ink-2)}
+.tx-foot.sub + .tx-foot{border-top:0;margin-top:0;padding-top:4px}
+.tx-foot.sub + .tx-foot:not(.sub){border-top:1px solid var(--line);margin-top:8px;padding-top:12px}
 .ft-conta.ok .tx-v b{color:var(--ink-2)}
 .ft-undo{all:unset;cursor:pointer;font:600 11.5px/1.2 var(--f-body);color:var(--ink-3);text-decoration:underline;text-underline-offset:2px;padding:2px}
 .ft-undo:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
@@ -3022,16 +3028,21 @@ V.faturas = function (M) {
     const cell = PF.tickCell(M, it.name, k), conta = porConta(it);
     let pay = '';
     if (it.tk) pay = '<div class="fat-pay"><span>' + (conta ? 'Todas marcadas como pagas na planilha.' : 'Marcada como paga na planilha.') + '</span><button type="button" class="btn sm" data-act="ft-tick" data-v="' + esc(it.name) + '" data-k="' + k + '" data-on="0"' + (FT.busy ? ' disabled' : '') + '>' + (FT.busy === it.name + '|' + k ? 'Gravando…' : 'Desfazer') + '</button></div>';
-    else if (conta) pay = it.falta <= 0.005 ? '<div class="fat-pay"><span>Todas pagas.</span></div>' : '<p class="fat-x">Toque em Paguei em cada conta quando pagar. Cada pagamento entra na aba PAGAMENTOS com a data de hoje.' + (it.reg > 0.005 ? ' Já pago: <b>' + PF.brl(it.reg) + '</b>. Falta: <b>' + PF.brl(it.falta) + '</b>.' : '') + '</p>';
+    else if (conta) pay = it.falta <= 0.005 ? '<div class="fat-pay"><span>Todas pagas.</span></div>' : '<p class="fat-x">Toque em Paguei em cada conta quando pagar. O valor que falta diminui a cada conta paga, e o pagamento entra na aba PAGAMENTOS com a data de hoje.</p>';
     else if (it.falta <= 0.005) pay = '<div class="fat-pay"><span>Paga: o valor está registrado na aba PAGAMENTOS.</span></div>';
     else if (it.reg > 0.005) pay = '<p class="fat-x">Já pagou <b>' + PF.brl(it.reg) + '</b> (aba PAGAMENTOS). Falta <b>' + PF.brl(it.falta) + '</b>; o Paguei marca a fatura inteira.</p>';
     else if (!cell) pay = '<p class="fat-x">Para marcar como paga, ' + PF.lab(k) + ' precisa estar no quadro da aba CONTAS A PAGAR.</p>';
     const lista = conta ? contaItens(M, it, k, rs).map(x => contaRow(M, x, it, k)).join('') : rs.map(r => PF.txRow(M, r, { noCard: 1, parc: parcTxt(PF.parcelaTxt(r, k, 1)) })).join('');
+    const parcial = it.falta > 0.005 && it.pago > 0.005;   // já pagou uma parte: o valor que aparece é o que falta
+    const totLab = conta ? 'Total das contas' : 'Total da fatura';
+    const foot = parcial
+      ? '<div class="tx-foot sub"><span>' + totLab + '</span><b>' + money2(it.val) + '</b></div><div class="tx-foot sub"><span>Já pago</span><b>−' + money2(it.pago) + '</b></div><div class="tx-foot"><span>Falta pagar</span><b>' + money2(it.falta) + '</b></div>'
+      : '<div class="tx-foot"><span>' + totLab + '</span><b>' + money2(it.val) + '</b></div>';
     return '<details class="card fat" data-name="' + esc(it.name) + '" data-k="' + k + '"' + (FT.open.has(it.name + '|' + k) ? ' open' : '') + '><summary>' + ftChip(it.name) +
-      '<span class="fn"><b>' + esc(PF.nomeConta(it.name)) + '</b><small>' + ftDue(it) + ', ' + (conta ? rs.length + (rs.length === 1 ? ' conta' : ' contas') : n) + '</small></span><span class="fv"><b>' + money2(it.val) + '</b>' + ftPay(M, it, k) + '</span></summary>' +
+      '<span class="fn"><b>' + esc(PF.nomeConta(it.name)) + '</b><small>' + ftDue(it) + ', ' + (conta ? rs.length + (rs.length === 1 ? ' conta' : ' contas') : n) + '</small></span><span class="fv"><b>' + money2(parcial ? it.falta : it.val) + '</b>' + (parcial ? '<small class="fv-de">de ' + PF.brl(it.val) + '</small>' : '') + ftPay(M, it, k) + '</span></summary>' +
       '<div class="fat-in">' + pay + (outros > 0.005 ? '<p class="fat-x">Inclui <b>' + PF.brl(outros) + '</b> de família e negócios.</p>' : '') +
       '<div class="tx-list">' + lista + '</div>' +
-      '<div class="tx-foot"><span>' + (conta ? 'Total das contas' : 'Total da fatura') + '</span><b>' + money2(it.val) + '</b></div></div></details>';
+      foot + '</div></details>';
   }).join('') + '</div>';
   return { title: 'Faturas', sub, html: h };
 };
